@@ -5,16 +5,14 @@ import io
 from pathlib import Path
 
 from pytest_readable.core.models import ReadableSuite
+from pytest_readable.language_registry import get_language_pack
 
 
 def render_csv(suite: ReadableSuite, language: str) -> str:
     """Serialize readable cases into CSV rows with a localized header."""
     output = io.StringIO()
     writer = csv.writer(output)
-    if language == "es":
-        writer.writerow(["Archivo", "Clase", "Test", "Que prueba", "Pasos", "Estado", "NodeID"])
-    else:
-        writer.writerow(["File", "Class", "Test", "What it tests", "Steps", "Status", "NodeID"])
+    writer.writerow(list(get_language_pack(language).csv_headers))
 
     for case in suite.cases:
         writer.writerow(

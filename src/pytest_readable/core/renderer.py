@@ -3,31 +3,60 @@
 from datetime import datetime
 
 from pytest_readable.core.models import ReadableSuite
+from pytest_readable.language_registry import get_language_pack
+
+
+def _status_label(status: str, language: str) -> str:
+    labels = get_language_pack(language).status_labels
+    return labels.get(status, labels["unknown"])
 
 
 def render_summary_text(suite: ReadableSuite, language: str, verbose: int = 0, include_steps: bool = False) -> str:
-    """Produce a brief textual summary optionally enriched with details."""
+    """Produce a localized textual summary with an optional detailed list."""
     counts = suite.counts()
     lines: list[str] = []
+    summary_pack = get_language_pack(language)
 
-    title = "Readable summary" if language == "en" else "Resumen legible"
-    lines.append(title)
+    lines.append(summary_pack.summary_title)
+    lines.append("")
     lines.append(f"- Total: {counts.get('total', 0)}")
 
     for key in ("passed", "failed", "skipped", "error", "xfailed", "xpassed", "collected"):
         if key in counts:
-            lines.append(f"- {key}: {counts[key]}")
+            lines.append(f"- {_status_label(key, summary_pack.code)}: {counts[key]}")
 
-    if verbose >= 1:
+    if verbose >= 1 or include_steps:
+        lines.append("")
+        lines.append(summary_pack.list_title)
+        lines.append("")
         for case in suite.cases:
-            lines.append(f"- [{case.status}] {case.nodeid}")
-            if verbose >= 2 and case.what:
-                lines.append(f"  what: {case.what}")
+            case_pack = get_language_pack(case.language or summary_pack.code)
+            status_text = _status_label(case.status, case_pack.code)
+            lines.append(f"- [{status_text}] {case.nodeid}")
+            if verbose >= 2:
+                lines.append(f"    {case_pack.display_name_label}: {case.display_name}")
+            if (verbose >= 2 or include_steps) and case.what:
+                lines.append(f"    {case_pack.what_label}: {case.what}")
             if include_steps and case.steps:
+                lines.append(f"    {case_pack.steps_label}:")
                 for step_idx, step in enumerate(case.steps, 1):
-                    lines.append(f"  {step_idx}. {step}")
+                    lines.append(f"      {step_idx}. {step}")
+            if include_steps and case.criteria:
+                lines.append(f"    {case_pack.criteria_label}:")
+                for check_idx, check in enumerate(case.criteria, 1):
+                    lines.append(f"      {check_idx}. {check}")
 
-    return "\n".join(lines)
+    lines.append("")
+    lines.append(
+        summary_pack.final_summary_template.format(
+            total=counts.get("total", 0),
+            passed=counts.get("passed", 0),
+            failed=counts.get("failed", 0),
+            skipped=counts.get("skipped", 0),
+        )
+    )
+
+    return "\n".join(lines).rstrip()
 
 
 def render_tree_text(suite: ReadableSuite, include_steps: bool = False) -> str:
@@ -60,14 +89,11 @@ def render_tree_text(suite: ReadableSuite, include_steps: bool = False) -> str:
 
 def render_markdown(suite: ReadableSuite, language: str) -> str:
     """Generate a markdown document that documents each test in the suite."""
-    title = "Test Specs" if language == "en" else "Especificaciones de tests"
-    generated_on = "Generated on" if language == "en" else "Generado el"
-    what_label = "What it tests" if language == "en" else "Que prueba"
-    steps_label = "Steps" if language == "en" else "Pasos"
+    language_pack = get_language_pack(language)
 
     lines = [
-        f"# {title}",
-        f"_{generated_on} {datetime.now().strftime('%Y-%m-%d %H:%M')}_",
+        f"# {language_pack.markdown_title}",
+        f"_{language_pack.markdown_generated_on} {datetime.now().strftime('%Y-%m-%d %H:%M')}_",
         "",
     ]
 
@@ -83,11 +109,15 @@ def render_markdown(suite: ReadableSuite, language: str) -> str:
             lines.append(f"- nodeid: `{case.nodeid}`")
             lines.append(f"- status: `{case.status}`")
             if case.what:
-                lines.append(f"- **{what_label}:** {case.what}")
+                lines.append(f"- **{language_pack.markdown_what_label}:** {case.what}")
             if case.steps:
-                lines.append(f"- **{steps_label}:**")
+                lines.append(f"- **{language_pack.markdown_steps_label}:**")
                 for step_idx, step in enumerate(case.steps, 1):
                     lines.append(f"  {step_idx}. {step}")
+            if case.criteria:
+                lines.append(f"- **{language_pack.markdown_criteria_label}:**")
+                for check_idx, check in enumerate(case.criteria, 1):
+                    lines.append(f"  {check_idx}. {check}")
             lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"

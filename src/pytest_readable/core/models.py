@@ -13,8 +13,10 @@ class ReadableTestCase:
     class_name: str
     function_name: str
     display_name: str
+    language: str = ""
     what: str = ""
     steps: list[str] = field(default_factory=list)
+    criteria: list[str] = field(default_factory=list)
     markers: list[str] = field(default_factory=list)
     status: str = "collected"
 

@@ -2,10 +2,11 @@
 
 from pathlib import Path
 
-from pytest_readable.core.parser import build_suite_from_items, find_spec_files
+from pytest_readable.core.parser import build_suite_from_items, detect_language_from_decorators
 from pytest_readable.core.renderer import render_summary_text, render_tree_text
 from pytest_readable.core.services import export_suite
 from pytest_readable.i18n import get_i18n
+from pytest_readable.language_registry import get_language_pack, supported_languages
 
 
 STATUS_MAP = {
@@ -44,17 +45,48 @@ class ReadableRuntimePlugin:
         if self.suite is not None:
             return
 
-        spec_files = find_spec_files(Path(self.config.rootpath))
-        self.i18n = get_i18n(self.config.getoption("readable_lang"), spec_files=spec_files)
+        preferred_lang = self.config.getoption("readable_lang")
+        if preferred_lang == "auto":
+            detected = detect_language_from_decorators(Path(self.config.rootpath))
+            if detected is not None:
+                preferred_lang = detected
+
+        self.i18n = get_i18n(preferred_lang)
         self.suite = build_suite_from_items(items, Path(self.config.rootpath), self.i18n)
 
+    def _line_style(self, line: str) -> dict[str, bool]:
+        """Return pytest terminal markup flags for a rendered summary line."""
+        normalized = line.strip()
+        what_prefixes = tuple(f"{get_language_pack(code).what_label}:" for code in supported_languages())
+        if normalized.startswith(what_prefixes):
+            return {"yellow": True}
+        for code in supported_languages():
+            status_labels = get_language_pack(code).status_labels
+            if normalized.startswith(f"- [{status_labels['passed']}]") or normalized.startswith(
+                f"- {status_labels['passed']}:"
+            ):
+                return {"green": True}
+            if normalized.startswith(f"- [{status_labels['failed']}]") or normalized.startswith(
+                f"- {status_labels['failed']}:"
+            ):
+                return {"red": True}
+            if normalized.startswith(f"- [{status_labels['error']}]") or normalized.startswith(
+                f"- {status_labels['error']}:"
+            ):
+                return {"red": True}
+            if normalized.startswith(f"- [{status_labels['skipped']}]") or normalized.startswith(
+                f"- {status_labels['skipped']}:"
+            ):
+                return {"yellow": True}
+        return {}
+
     def _print_to_terminal(self, terminal_reporter, text: str) -> None:
-        """Emit readable text through the terminal reporter without colors."""
+        """Emit readable text through the terminal reporter with optional color."""
         if not text.strip():
             return
         terminal_reporter.write_line("")
         for line in text.splitlines():
-            terminal_reporter.write_line(line)
+            terminal_reporter.write_line(line, **self._line_style(line))
 
     def _export_if_requested(self, terminal_reporter):
         """Export readable docs after summary if the flag is enabled."""
@@ -167,7 +199,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--readable-lang",
         action="store",
-        choices=["auto", "en", "es"],
+        choices=["auto", *supported_languages()],
         default="auto",
         help="Language for readable output",
     )

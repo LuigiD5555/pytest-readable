@@ -1,17 +1,11 @@
-"""Helpers that normalize decorator/markdown specs and build readable suites."""
+"""Helpers that normalize decorator metadata and build readable suites."""
 
 import ast
-import re
 from pathlib import Path
 from typing import Any
 
 from pytest_readable.core.models import ReadableSuite, ReadableTestCase
 from pytest_readable.i18n import I18n
-
-
-def find_spec_files(root: Path) -> list[Path]:
-    """Locate all `.spec.md` files beneath the given directory."""
-    return sorted(root.rglob("*.spec.md"))
 
 
 def find_test_files(root: Path) -> list[Path]:
@@ -21,62 +15,99 @@ def find_test_files(root: Path) -> list[Path]:
     return sorted(paths)
 
 
-def parse_spec_file(path: Path, i18n: I18n) -> dict[str, Any]:
-    """Parse a `.spec.md` document into a normalized structure for rendering."""
-    content = path.read_text(encoding="utf-8")
-    lines = content.splitlines()
+def _has_value(value: Any) -> bool:
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, list):
+        return any(str(item).strip() for item in value)
+    return False
 
-    result: dict[str, Any] = {
-        "file": path,
-        "title": "",
-        "tests": [],
-    }
 
-    current_test = None
-    in_steps = False
-    what_labels = i18n.accepted_field_labels("what")
-    steps_labels = i18n.accepted_field_labels("steps")
+def _score_text_language(text: str) -> tuple[int, int]:
+    sample = text.lower()
+    en_score = 0
+    es_score = 0
 
-    for line in lines:
-        stripped = line.strip()
+    if any(ch in sample for ch in ("á", "é", "í", "ó", "ú", "ñ")):
+        es_score += 2
 
-        if stripped.startswith("# ") and not result["title"]:
-            result["title"] = stripped[2:].strip()
-            continue
+    es_tokens = (
+        " que ",
+        " prueba",
+        " pasos",
+        " español",
+        " español",
+        " verifica",
+        " ejecuta",
+        " construye",
+        " idioma",
+        " resumen",
+        " archivo",
+    )
+    en_tokens = (
+        " the ",
+        " what ",
+        " steps",
+        " english",
+        " verify",
+        " run ",
+        " build",
+        " language",
+        " summary",
+        " file",
+    )
 
-        if stripped.startswith("## "):
-            if current_test:
-                result["tests"].append(current_test)
-            current_test = {
-                "name": stripped[3:].strip(),
-                "what": "",
-                "steps": [],
-            }
-            in_steps = False
-            continue
+    for token in es_tokens:
+        if token in sample:
+            es_score += 1
+    for token in en_tokens:
+        if token in sample:
+            en_score += 1
 
-        if current_test is None:
-            continue
+    return en_score, es_score
 
-        matched_label = next((label for label in what_labels if stripped.startswith(label)), None)
-        if matched_label is not None:
-            current_test["what"] = stripped[len(matched_label):].strip()
-            in_steps = False
-            continue
 
-        if stripped in steps_labels:
-            in_steps = True
-            continue
+def detect_language_from_decorators(root: Path) -> str | None:
+    """Infer predominant language from `@readable(...)` metadata in test files."""
+    scores = {"en": 0, "es": 0}
 
-        if in_steps and stripped:
-            step_match = re.match(r"^(\d+\.|-)\s+(.*)", stripped)
-            if step_match:
-                current_test["steps"].append(step_match.group(2).strip())
+    for test_file in find_test_files(root):
+        tree = ast.parse(test_file.read_text(encoding="utf-8"), filename=str(test_file))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            if _decorator_name(node) != "readable":
+                continue
 
-    if current_test:
-        result["tests"].append(current_test)
+            for keyword in node.keywords:
+                if keyword.arg is None:
+                    continue
+                value = _literal(keyword.value)
+                if not _has_value(value):
+                    continue
 
-    return result
+                if keyword.arg.endswith("_es"):
+                    scores["es"] += 3
+                    continue
+                if keyword.arg.endswith("_en"):
+                    scores["en"] += 3
+                    continue
+                if keyword.arg not in {"intent", "title", "steps", "criteria"}:
+                    continue
+
+                if isinstance(value, list):
+                    joined = " ".join(str(item) for item in value)
+                else:
+                    joined = str(value)
+                en_score, es_score = _score_text_language(joined)
+                scores["en"] += en_score
+                scores["es"] += es_score
+
+    if scores["en"] == scores["es"] == 0:
+        return None
+    if scores["en"] == scores["es"]:
+        return None
+    return "en" if scores["en"] > scores["es"] else "es"
 
 
 def _decorator_name(decorator: ast.expr) -> str:
@@ -114,12 +145,51 @@ def _pick_text(call: ast.Call, key: str, language: str) -> str:
     return ""
 
 
+def _parse_steps_text(value: str) -> list[str]:
+    """Parse multiline steps text supporting numbered and bullet style input."""
+    steps: list[str] = []
+    for raw_line in value.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        line = line.lstrip("-").strip()
+        if ". " in line and line.split(". ", 1)[0].isdigit():
+            line = line.split(". ", 1)[1].strip()
+        steps.append(line)
+    return steps
+
+
 def _pick_steps(call: ast.Call, language: str) -> list[str]:
-    """Select a list of step strings from the decorator, respecting language."""
+    """Select step metadata as list or multiline string from the decorator."""
     for candidate in (f"steps_{language}", "steps", "steps_en", "steps_es"):
         value = _kwarg(call, candidate)
         if isinstance(value, list):
-            return [str(item) for item in value]
+            normalized = [str(item) for item in value]
+            if normalized:
+                return normalized
+            continue
+        if isinstance(value, str):
+            normalized = _parse_steps_text(value)
+            if normalized:
+                return normalized
+            continue
+    return []
+
+
+def _pick_criteria(call: ast.Call, language: str) -> list[str]:
+    """Select pass-condition metadata as list or multiline string."""
+    for candidate in (f"criteria_{language}", "criteria", "criteria_en", "criteria_es"):
+        value = _kwarg(call, candidate)
+        if isinstance(value, list):
+            normalized = [str(item) for item in value]
+            if normalized:
+                return normalized
+            continue
+        if isinstance(value, str):
+            normalized = _parse_steps_text(value)
+            if normalized:
+                return normalized
+            continue
     return []
 
 
@@ -132,24 +202,25 @@ def _parse_decorated_test(
     if not node.name.startswith("test"):
         return None
 
-    spec_call = None
+    readable_call = None
     for decorator in node.decorator_list:
-        if _decorator_name(decorator) == "spec" and isinstance(decorator, ast.Call):
-            spec_call = decorator
+        if _decorator_name(decorator) == "readable" and isinstance(decorator, ast.Call):
+            readable_call = decorator
             break
-    if spec_call is None:
+    if readable_call is None:
         return None
 
     default_name = f"{class_name}.{node.name}" if class_name else node.name
-    name = _pick_text(spec_call, "title", language) or default_name.replace("_", " ")
-    what = _pick_text(spec_call, "what", language)
-    steps = _pick_steps(spec_call, language)
+    name = _pick_text(readable_call, "title", language) or default_name.replace("_", " ")
+    what = _pick_text(readable_call, "intent", language)
+    steps = _pick_steps(readable_call, language)
+    criteria = _pick_criteria(readable_call, language)
 
-    return {"name": name, "what": what, "steps": steps}
+    return {"name": name, "what": what, "steps": steps, "criteria": criteria}
 
 
 def parse_decorated_spec_file(path: Path, language: str) -> dict[str, Any]:
-    """Walk a test module to collect all `@spec` decorator metadata."""
+    """Walk a test module to collect all `@readable` decorator metadata."""
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     tests = []
 
@@ -170,63 +241,6 @@ def parse_decorated_spec_file(path: Path, language: str) -> dict[str, Any]:
     return {"file": path, "title": path.name, "tests": tests}
 
 
-def _spec_md_path_for_test(test_path: Path) -> Path:
-    """Derive the companion spec markdown path for a given test file."""
-    return test_path.with_name(f"{test_path.stem}.spec.md")
-
-
-def generate_spec_markdown_from_decorators(root: Path, i18n: I18n) -> list[Path]:
-    """Emit `.spec.md` files by translating decorator metadata for each test file."""
-    generated = []
-    for test_file in find_test_files(root):
-        spec = parse_decorated_spec_file(test_file, i18n.language)
-        if not spec["tests"]:
-            continue
-
-        lines = [f"# {spec['title']}", ""]
-        for test in spec["tests"]:
-            lines.append(f"## {test['name']}")
-            if test["what"]:
-                lines.append(f"**{i18n.field_label('what')}:** {test['what']}")
-            if test["steps"]:
-                lines.append(f"**{i18n.field_label('steps')}:**")
-                for i, step in enumerate(test["steps"], 1):
-                    lines.append(f"{i}. {step}")
-            lines.append("")
-
-        output_path = _spec_md_path_for_test(test_file)
-        output_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
-        generated.append(output_path)
-
-    return generated
-
-
-def load_specs(root: Path, i18n: I18n) -> list[dict[str, Any]]:
-    """Load spec metadata preferring decorators and falling back to `.spec.md`."""
-    decorated_specs = []
-    decorated_files = set()
-    for test_file in find_test_files(root):
-        spec = parse_decorated_spec_file(test_file, i18n.language)
-        if spec["tests"]:
-            decorated_specs.append(spec)
-            decorated_files.add(test_file.resolve())
-
-    markdown_specs = []
-    for spec_file in find_spec_files(root):
-        candidate_test = spec_file.with_name(spec_file.name.replace(".spec.md", ".py")).resolve()
-        if candidate_test in decorated_files:
-            continue
-        markdown_specs.append(parse_spec_file(spec_file, i18n))
-
-    return sorted(decorated_specs + markdown_specs, key=lambda spec: str(spec["file"]))
-
-
-def _normalize_key(value: str) -> str:
-    """Normalize text for best-effort comparison between names."""
-    lowered = value.lower().replace("test_", "")
-    return re.sub(r"[^a-z0-9]", "", lowered)
-
-
 def _pick_value(metadata: dict[str, Any], key: str, language: str) -> str:
     """Choose the most specific localized string from metadata."""
     for candidate in (f"{key}_{language}", key, f"{key}_en", f"{key}_es"):
@@ -236,12 +250,58 @@ def _pick_value(metadata: dict[str, Any], key: str, language: str) -> str:
     return ""
 
 
+def _text_chunks(value: Any) -> list[str]:
+    if isinstance(value, str) and value.strip():
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return []
+
+
+def _infer_metadata_language(metadata: dict[str, Any], default_language: str) -> str:
+    """Infer language preference for one decorated test metadata payload."""
+    scores = {"en": 0, "es": 0}
+
+    for key in ("title", "intent", "steps", "criteria"):
+        en_chunks = _text_chunks(metadata.get(f"{key}_en"))
+        es_chunks = _text_chunks(metadata.get(f"{key}_es"))
+        if en_chunks:
+            scores["en"] += 3
+        if es_chunks:
+            scores["es"] += 3
+
+        generic_chunks = _text_chunks(metadata.get(key))
+        for chunk in generic_chunks:
+            en_score, es_score = _score_text_language(chunk)
+            scores["en"] += en_score
+            scores["es"] += es_score
+
+    if scores["en"] == scores["es"]:
+        return default_language
+    return "en" if scores["en"] > scores["es"] else "es"
+
+
 def _pick_steps_from_metadata(metadata: dict[str, Any], language: str) -> list[str]:
     """Return localized step lists stored on the decorated function."""
     for candidate in (f"steps_{language}", "steps", "steps_en", "steps_es"):
         value = metadata.get(candidate)
         if isinstance(value, list):
-            return [str(step) for step in value]
+            normalized = [str(step) for step in value]
+            if normalized:
+                return normalized
+            continue
+    return []
+
+
+def _pick_criteria_from_metadata(metadata: dict[str, Any], language: str) -> list[str]:
+    """Return localized pass-condition lists stored on the decorated function."""
+    for candidate in (f"criteria_{language}", "criteria", "criteria_en", "criteria_es"):
+        value = metadata.get(candidate)
+        if isinstance(value, list):
+            normalized = [str(step) for step in value]
+            if normalized:
+                return normalized
+            continue
     return []
 
 
@@ -250,63 +310,23 @@ def _normalize_function_name(function_name: str) -> str:
     return function_name.replace("test_", "").replace("_", " ").strip() or function_name
 
 
-def _read_markdown_index(rootdir: Path, i18n: I18n) -> dict[Path, list[dict[str, Any]]]:
-    """Index `.spec.md` content so it can be matched to pytest items."""
-    mapping: dict[Path, list[dict[str, Any]]] = {}
-    for spec_file in find_spec_files(rootdir):
-        parsed = parse_spec_file(spec_file, i18n)
-        test_candidate = (spec_file.parent / spec_file.name.replace(".spec.md", ".py")).resolve()
-        mapping[test_candidate] = parsed["tests"]
-    return mapping
-
-
-def _pick_markdown_entry(
-    file_entries: list[dict[str, Any]],
-    used_indexes: set[int],
-    function_name: str,
-) -> dict[str, Any] | None:
-    """Match a markdown entry to a collected test function name if possible."""
-    fn_key = _normalize_key(function_name)
-    for idx, entry in enumerate(file_entries):
-        if idx in used_indexes:
-            continue
-        entry_key = _normalize_key(entry.get("name", ""))
-        if entry_key and (entry_key in fn_key or fn_key in entry_key):
-            used_indexes.add(idx)
-            return entry
-
-    for idx, entry in enumerate(file_entries):
-        if idx not in used_indexes:
-            used_indexes.add(idx)
-            return entry
-    return None
-
-
 def build_suite_from_items(items: list[Any], rootdir: Path, i18n: I18n) -> ReadableSuite:
     """Build a readable suite model that mirrors pytest's collected order."""
-    markdown_index = _read_markdown_index(rootdir, i18n)
-    markdown_usage: dict[Path, set[int]] = {}
-
     cases: list[ReadableTestCase] = []
     for item in items:
         path = Path(str(getattr(item, "path", ""))).resolve()
         class_name = item.cls.__name__ if getattr(item, "cls", None) else ""
         function_name = getattr(item, "originalname", None) or item.name.split("[", 1)[0]
         metadata = getattr(getattr(item, "obj", None), "__spec_meta__", {}) or {}
+        case_language = _infer_metadata_language(metadata, i18n.language)
 
-        display_name = _pick_value(metadata, "title", i18n.language) or _normalize_function_name(function_name)
-        what = _pick_value(metadata, "what", i18n.language)
-        steps = _pick_steps_from_metadata(metadata, i18n.language)
-
-        if not what and not steps:
-            entries = markdown_index.get(path, [])
-            if entries:
-                used = markdown_usage.setdefault(path, set())
-                picked = _pick_markdown_entry(entries, used, function_name)
-                if picked is not None:
-                    display_name = picked.get("name") or display_name
-                    what = picked.get("what", "")
-                    steps = list(picked.get("steps", []))
+        intent = _pick_value(metadata, "intent", case_language)
+        display_name = intent or _pick_value(metadata, "title", case_language) or _normalize_function_name(
+            function_name
+        )
+        what = intent
+        steps = _pick_steps_from_metadata(metadata, case_language)
+        criteria = _pick_criteria_from_metadata(metadata, case_language)
 
         module_path = str(path.relative_to(rootdir)) if path.is_relative_to(rootdir) else str(path)
 
@@ -317,8 +337,10 @@ def build_suite_from_items(items: list[Any], rootdir: Path, i18n: I18n) -> Reada
                 class_name=class_name,
                 function_name=function_name,
                 display_name=display_name,
+                language=case_language,
                 what=what,
                 steps=steps,
+                criteria=criteria,
                 markers=[marker.name for marker in item.iter_markers()],
             )
         )

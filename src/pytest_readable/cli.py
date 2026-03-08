@@ -1,12 +1,69 @@
 """Secondary CLI helper for pytest-readable features."""
 
 import argparse
+import re
 import subprocess
 import sys
-from pathlib import Path
 
-from pytest_readable.core.parser import generate_spec_markdown_from_decorators
-from pytest_readable.i18n import get_i18n
+from pytest_readable.language_registry import readable_summary_titles, supported_languages
+
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return ANSI_RE.sub("", text)
+
+
+def _extract_report_section(text: str, title: str) -> str:
+    pattern = rf"(?ms)^=+\s*{re.escape(title)}\s*=+\n.*?(?=^=+\s*.+?\s*=+\n|\Z)"
+    match = re.search(pattern, text)
+    if not match:
+        return ""
+    lines = match.group(0).strip().splitlines()
+    while lines and re.match(r"^\d+\s+.+\s+in\s+[0-9.]+s$", _strip_ansi(lines[-1]).strip()):
+        lines.pop()
+    return ("\n".join(lines).strip() + "\n") if lines else ""
+
+
+def _extract_readable_block(text: str) -> str:
+    lines = text.splitlines()
+    start = -1
+    summary_titles = readable_summary_titles()
+    for idx, line in enumerate(lines):
+        if _strip_ansi(line).strip() in summary_titles:
+            start = idx
+            break
+    if start < 0:
+        return ""
+
+    block = lines[start:]
+    while block and re.match(r"^\d+\s+.+\s+in\s+[0-9.]+s$", _strip_ansi(block[-1]).strip()):
+        block.pop()
+    while block and not block[-1].strip():
+        block.pop()
+    return ("\n".join(block).strip() + "\n") if block else ""
+
+
+def _print_wrapped_output(stdout_text: str, stderr_text: str, returncode: int) -> None:
+    chunks: list[str] = []
+    if returncode != 0:
+        for title in ("FAILURES", "warnings summary", "short test summary info"):
+            section = _extract_report_section(stdout_text, title)
+            if section:
+                chunks.append(section)
+
+    readable = _extract_readable_block(stdout_text)
+    if readable:
+        chunks.append(readable)
+
+    if chunks:
+        print("\n".join(chunk.strip() for chunk in chunks if chunk.strip()))
+    elif stdout_text.strip():
+        print(stdout_text.strip())
+
+    if stderr_text.strip():
+        print(stderr_text.strip(), file=sys.stderr)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -15,37 +72,40 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("pytest_args", nargs="*", help="Arguments forwarded to pytest")
     parser.add_argument(
         "--lang",
-        choices=["auto", "en", "es"],
+        choices=["auto", *supported_languages()],
         default="auto",
-        help="Language used by --generate-spec-md",
-    )
-    parser.add_argument(
-        "--generate-spec-md",
-        metavar="PATH",
-        help="Generate .spec.md files from @spec decorators under PATH",
+        help="Language used by readable output",
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     """Entrypoint invoked by the `readable` script; forwards to pytest."""
-    args = build_parser().parse_args(argv)
+    args, passthrough = build_parser().parse_known_args(argv)
 
-    if args.generate_spec_md:
-        root = Path(args.generate_spec_md)
-        i18n = get_i18n(args.lang)
-        generated = generate_spec_markdown_from_decorators(root, i18n)
-        print(f"generated {len(generated)} .spec.md files")
-        return 0
-
-    pytest_args = list(args.pytest_args)
-    if pytest_args and pytest_args[0] == "pytest":
+    pytest_args = [*args.pytest_args, *passthrough]
+    while pytest_args and pytest_args[0] in {"pytest", "py.test"}:
         pytest_args.pop(0)
+
     if not any(part.startswith("--readable") for part in pytest_args):
         pytest_args.insert(0, "--readable")
 
+    if not any(part.startswith("--readable-lang") for part in pytest_args) and args.lang != "auto":
+        pytest_args.append(f"--readable-lang={args.lang}")
+
+    if not any(part.startswith("-q") or part in {"--quiet", "-v", "--verbose"} for part in pytest_args):
+        pytest_args.extend(["-q", "--no-header"])
+
+    if not any(part.startswith("--color=") for part in pytest_args):
+        pytest_args.append("--color=yes")
+
+    if "--readable-include-steps" not in pytest_args:
+        pytest_args.append("--readable-include-steps")
+
     command = ["pytest", *pytest_args]
-    return subprocess.call(command)
+    result = subprocess.run(command, text=True, capture_output=True, check=False)
+    _print_wrapped_output(result.stdout, result.stderr, result.returncode)
+    return result.returncode
 
 
 if __name__ == "__main__":
