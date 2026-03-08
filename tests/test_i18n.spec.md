@@ -78,3 +78,38 @@
 2. Ejecuta `compile_po_file`
 3. Abre el `.mo` resultante con `GNUTranslations`
 4. Verifica que la clave traducida se resuelve al valor esperado
+
+## Parsea salida cruda de pytest y extrae metricas
+**Qué prueba:** Que el parser de salida de pytest identifica tests recolectados, resumen de estados, duracion y casos fallidos.
+**Pasos:**
+1. Prepara una salida de pytest de ejemplo con casos `PASSED`, `FAILED` y `SKIPPED`
+2. Ejecuta `parse_pytest_output`
+3. Verifica cantidad recolectada, conteos del resumen, duracion y nodeid fallido
+
+## Renderiza resumen natural de pytest en espanol
+**Qué prueba:** Que el renderizador genera un reporte legible en espanol con estado general y detalle de fallas.
+**Pasos:**
+1. Construye un reporte parseado en memoria con un test pasado y uno fallido
+2. Ejecuta `render_natural_pytest_summary` con idioma `es`
+3. Verifica encabezado, conteos en lenguaje natural y presencia del nodeid fallido
+
+## Parsea metadata i18n definida con decorator spec
+**Qué prueba:** Que el parser de decorators extrae titulo, descripcion y pasos del idioma solicitado.
+**Pasos:**
+1. Crea un archivo de test temporal con `@spec` y campos `title/what/steps` en ingles y espanol
+2. Ejecuta `parse_decorated_spec_file` con idioma espanol
+3. Verifica que el resultado use textos espanoles y preserve la estructura de pasos
+
+## Prioriza decorators sobre markdown legacy
+**Qué prueba:** Que al coexistir `@spec` y `.spec.md` para el mismo test, se usa la metadata del decorator.
+**Pasos:**
+1. Crea un archivo `test_*.py` con `@spec` y un `.spec.md` con contenido distinto
+2. Ejecuta `load_specs`
+3. Verifica que solo se cargue la version decorada y no la documentacion legacy
+
+## Genera archivo spec markdown desde decorators
+**Qué prueba:** Que se puede materializar documentacion `.spec.md` automaticamente tomando decorators como fuente.
+**Pasos:**
+1. Crea un archivo de test con `@spec` en ingles
+2. Ejecuta `generate_spec_markdown_from_decorators`
+3. Verifica que se cree `test_*.spec.md` con titulo, descripcion y pasos esperados

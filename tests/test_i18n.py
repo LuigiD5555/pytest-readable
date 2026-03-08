@@ -1,7 +1,16 @@
 from gettext import GNUTranslations
 from pathlib import Path
 
-from pytest_translator.cli import export_csv, export_markdown, parse_spec_file
+from pytest_translator.cli import (
+    export_csv,
+    export_markdown,
+    generate_spec_markdown_from_decorators,
+    load_specs,
+    parse_decorated_spec_file,
+    parse_pytest_output,
+    parse_spec_file,
+    render_natural_pytest_summary,
+)
 from pytest_translator.compile_locales import compile_po_file
 from pytest_translator.i18n import detect_language_from_text, get_i18n, resolve_language
 
@@ -155,3 +164,127 @@ msgstr "Descripcion de prueba"
     with mo_path.open("rb") as fh:
         translations = GNUTranslations(fh)
     assert translations.gettext("app_description") == "Descripcion de prueba"
+
+
+def test_parse_pytest_output_extracts_counts_and_failed_tests():
+    output = """============================= test session starts ==============================
+collecting ... collected 3 items
+
+tests/test_i18n.py::test_ok PASSED   [ 33%]
+tests/test_i18n.py::test_boom FAILED [ 66%]
+tests/test_i18n.py::test_skip SKIPPED [100%]
+
+=================== 1 failed, 1 passed, 1 skipped in 0.07s ===================
+"""
+    report = parse_pytest_output(output)
+
+    assert report["collected"] == 3
+    assert report["summary"]["failed"] == 1
+    assert report["summary"]["passed"] == 1
+    assert report["summary"]["skipped"] == 1
+    assert report["duration"] == "0.07s"
+    assert [c["nodeid"] for c in report["cases"] if c["status"] == "FAILED"] == [
+        "tests/test_i18n.py::test_boom"
+    ]
+
+
+def test_render_natural_pytest_summary_in_spanish():
+    report = {
+        "collected": 2,
+        "cases": [
+            {"nodeid": "tests/test_i18n.py::test_ok", "status": "PASSED"},
+            {"nodeid": "tests/test_i18n.py::test_boom", "status": "FAILED"},
+        ],
+        "summary": {"passed": 1, "failed": 1},
+        "duration": "0.02s",
+    }
+
+    text = render_natural_pytest_summary(report, "es")
+
+    assert "Resumen natural de pytest" in text
+    assert "Se recolectaron 2 tests." in text
+    assert "1 pasaron, 1 fallaron." in text
+    assert "tests/test_i18n.py::test_boom" in text
+
+
+def test_parse_decorated_spec_file_reads_i18n_metadata(tmp_path):
+    test_file = tmp_path / "test_sample.py"
+    test_file.write_text(
+        """from pytest_translator.decorators import spec
+
+@spec(
+    title_en="Handles empty payload",
+    title_es="Maneja carga vacia",
+    what_en="Returns a controlled error",
+    what_es="Regresa un error controlado",
+    steps_en=["Send empty payload", "Assert ValueError"],
+    steps_es=["Enviar carga vacia", "Validar ValueError"],
+)
+def test_empty_payload():
+    pass
+""",
+        encoding="utf-8",
+    )
+
+    parsed = parse_decorated_spec_file(test_file, "es")
+
+    assert parsed["title"] == "test_sample.py"
+    assert parsed["tests"][0]["name"] == "Maneja carga vacia"
+    assert parsed["tests"][0]["what"] == "Regresa un error controlado"
+    assert parsed["tests"][0]["steps"] == ["Enviar carga vacia", "Validar ValueError"]
+
+
+def test_load_specs_prefers_decorators_over_spec_markdown(tmp_path):
+    test_file = tmp_path / "test_query.py"
+    test_file.write_text(
+        """from pytest_translator.decorators import spec
+
+@spec(what_en="Decorator source of truth", steps_en=["Step from decorator"])
+def test_example():
+    pass
+""",
+        encoding="utf-8",
+    )
+    spec_file = tmp_path / "test_query.spec.md"
+    spec_file.write_text(
+        """# test_query.py
+
+## Legacy markdown doc
+**What it tests:** Should be ignored when decorator exists
+**Steps:**
+1. Old step
+""",
+        encoding="utf-8",
+    )
+
+    specs = load_specs(tmp_path, get_i18n("en"))
+
+    assert len(specs) == 1
+    assert specs[0]["file"] == test_file
+    assert specs[0]["tests"][0]["what"] == "Decorator source of truth"
+    assert specs[0]["tests"][0]["steps"] == ["Step from decorator"]
+
+
+def test_generate_spec_markdown_from_decorators_creates_files(tmp_path):
+    test_file = tmp_path / "test_service.py"
+    test_file.write_text(
+        """from pytest_translator.decorators import spec
+
+@spec(
+    title_en="Creates service client",
+    what_en="Builds a configured client",
+    steps_en=["Load config", "Instantiate client"],
+)
+def test_build_client():
+    pass
+""",
+        encoding="utf-8",
+    )
+
+    generated = generate_spec_markdown_from_decorators(tmp_path, get_i18n("en"))
+
+    assert generated == [tmp_path / "test_service.spec.md"]
+    content = generated[0].read_text(encoding="utf-8")
+    assert "# test_service.py" in content
+    assert "## Creates service client" in content
+    assert "**What it tests:** Builds a configured client" in content

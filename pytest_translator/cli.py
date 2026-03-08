@@ -4,6 +4,7 @@ specview.py - Interactive spec viewer for pytest
 """
 
 import argparse
+import ast
 import csv
 import io
 import re
@@ -67,6 +68,16 @@ def build_parser(i18n):
         default="auto",
         help=i18n.t("lang_help"),
     )
+    parser.add_argument(
+        "--pytest-report",
+        metavar="FILE",
+        help="Read pytest output (FILE or '-' for stdin) and render a natural-language summary.",
+    )
+    parser.add_argument(
+        "--generate-spec-md",
+        action="store_true",
+        help="Generate .spec.md files from @spec decorators found in pytest test files.",
+    )
     return parser
 
 
@@ -75,6 +86,13 @@ def build_parser(i18n):
 def find_spec_files(root: Path) -> list[Path]:
     """Find all .spec.md files under a directory."""
     return sorted(root.rglob("*.spec.md"))
+
+
+def find_test_files(root: Path) -> list[Path]:
+    """Find pytest-style test files under a directory."""
+    paths = set(root.rglob("test_*.py"))
+    paths.update(root.rglob("*_test.py"))
+    return sorted(paths)
 
 
 def parse_spec_file(path: Path, i18n) -> dict:
@@ -133,6 +151,141 @@ def parse_spec_file(path: Path, i18n) -> dict:
         result["tests"].append(current_test)
 
     return result
+
+
+def _decorator_name(decorator: ast.expr) -> str:
+    target = decorator.func if isinstance(decorator, ast.Call) else decorator
+    if isinstance(target, ast.Name):
+        return target.id
+    if isinstance(target, ast.Attribute):
+        return target.attr
+    return ""
+
+
+def _literal(node: ast.expr):
+    try:
+        return ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError):
+        return None
+
+
+def _kwarg(call: ast.Call, key: str):
+    for keyword in call.keywords:
+        if keyword.arg == key:
+            return _literal(keyword.value)
+    return None
+
+
+def _pick_text(call: ast.Call, key: str, language: str) -> str:
+    for candidate in (f"{key}_{language}", key, f"{key}_en", f"{key}_es"):
+        value = _kwarg(call, candidate)
+        if isinstance(value, str):
+            return value
+    return ""
+
+
+def _pick_steps(call: ast.Call, language: str) -> list[str]:
+    for candidate in (f"steps_{language}", "steps", "steps_en", "steps_es"):
+        value = _kwarg(call, candidate)
+        if isinstance(value, list):
+            return [str(item) for item in value]
+    return []
+
+
+def _parse_decorated_test(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    language: str,
+    class_name: str = "",
+) -> dict | None:
+    if not node.name.startswith("test"):
+        return None
+
+    spec_call = None
+    for decorator in node.decorator_list:
+        if _decorator_name(decorator) == "spec" and isinstance(decorator, ast.Call):
+            spec_call = decorator
+            break
+    if spec_call is None:
+        return None
+
+    default_name = f"{class_name}.{node.name}" if class_name else node.name
+    name = _pick_text(spec_call, "title", language) or default_name.replace("_", " ")
+    what = _pick_text(spec_call, "what", language)
+    steps = _pick_steps(spec_call, language)
+
+    return {"name": name, "what": what, "steps": steps}
+
+
+def parse_decorated_spec_file(path: Path, language: str) -> dict:
+    """Parse @spec decorators from a test file into a normalized structure."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    tests = []
+
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            parsed = _parse_decorated_test(node, language)
+            if parsed:
+                tests.append(parsed)
+            continue
+
+        if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    parsed = _parse_decorated_test(child, language, class_name=node.name)
+                    if parsed:
+                        tests.append(parsed)
+
+    return {"file": path, "title": path.name, "tests": tests}
+
+
+def _spec_md_path_for_test(test_path: Path) -> Path:
+    return test_path.with_name(f"{test_path.stem}.spec.md")
+
+
+def generate_spec_markdown_from_decorators(root: Path, i18n) -> list[Path]:
+    """Generate .spec.md files from @spec decorators for every decorated test file."""
+    generated = []
+    for test_file in find_test_files(root):
+        spec = parse_decorated_spec_file(test_file, i18n.language)
+        if not spec["tests"]:
+            continue
+
+        lines = [f"# {spec['title']}", ""]
+        for test in spec["tests"]:
+            lines.append(f"## {test['name']}")
+            if test["what"]:
+                lines.append(f"**{i18n.field_label('what')}:** {test['what']}")
+            if test["steps"]:
+                lines.append(f"**{i18n.field_label('steps')}:**")
+                for i, step in enumerate(test["steps"], 1):
+                    lines.append(f"{i}. {step}")
+            lines.append("")
+
+        output_path = _spec_md_path_for_test(test_file)
+        output_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+        generated.append(output_path)
+
+    return generated
+
+
+def load_specs(root: Path, i18n) -> list[dict]:
+    """Load specs preferring @spec decorators over .spec.md files."""
+    decorated_specs = []
+    decorated_files = set()
+    for test_file in find_test_files(root):
+        spec = parse_decorated_spec_file(test_file, i18n.language)
+        if spec["tests"]:
+            decorated_specs.append(spec)
+            decorated_files.add(test_file.resolve())
+
+    markdown_specs = []
+    for spec_file in find_spec_files(root):
+        candidate_test = spec_file.with_name(spec_file.name.replace(".spec.md", ".py")).resolve()
+        if candidate_test in decorated_files:
+            continue
+        markdown_specs.append(parse_spec_file(spec_file, i18n))
+
+    return sorted(decorated_specs + markdown_specs, key=lambda spec: str(spec["file"]))
 
 
 # --- Terminal rendering ----------------------------------------------------
@@ -301,6 +454,112 @@ def export_csv(specs: list[dict], i18n) -> str:
     return output.getvalue()
 
 
+def parse_pytest_output(text: str) -> dict:
+    """Extract key metrics and per-test statuses from raw pytest output."""
+    collected = None
+    duration = ""
+    cases = []
+    summary = {}
+
+    collected_match = re.search(r"collected\s+(\d+)\s+items", text)
+    if collected_match:
+        collected = int(collected_match.group(1))
+
+    case_pattern = re.compile(
+        r"^(?P<nodeid>\S+)\s+(?P<status>PASSED|FAILED|SKIPPED|XPASS|XFAIL|ERROR)\b",
+        re.MULTILINE,
+    )
+    for match in case_pattern.finditer(text):
+        cases.append(
+            {
+                "nodeid": match.group("nodeid"),
+                "status": match.group("status"),
+            }
+        )
+
+    summary_match = re.search(r"=+\s*(.*?)\s+in\s+([0-9.]+s)\s*=+", text)
+    if summary_match:
+        duration = summary_match.group(2)
+        for chunk in summary_match.group(1).split(","):
+            chunk = chunk.strip()
+            count_match = re.match(r"(\d+)\s+([a-zA-Z]+)", chunk)
+            if count_match:
+                summary[count_match.group(2).lower()] = int(count_match.group(1))
+
+    if cases and not summary:
+        for case in cases:
+            key = case["status"].lower()
+            summary[key] = summary.get(key, 0) + 1
+
+    return {
+        "collected": collected,
+        "cases": cases,
+        "summary": summary,
+        "duration": duration,
+    }
+
+
+def render_natural_pytest_summary(report: dict, language: str) -> str:
+    """Render a short, human-readable summary from parsed pytest output."""
+    summary = report["summary"]
+    collected = report["collected"]
+    duration = report["duration"] or "unknown"
+    failed_cases = [c["nodeid"] for c in report["cases"] if c["status"] in {"FAILED", "ERROR"}]
+
+    if language == "es":
+        lines = ["Resumen natural de pytest"]
+        if collected is not None:
+            lines.append(f"- Se recolectaron {collected} tests.")
+        if summary:
+            parts = []
+            if "passed" in summary:
+                parts.append(f"{summary['passed']} pasaron")
+            if "failed" in summary:
+                parts.append(f"{summary['failed']} fallaron")
+            if "error" in summary:
+                parts.append(f"{summary['error']} tuvieron error")
+            if "skipped" in summary:
+                parts.append(f"{summary['skipped']} fueron omitidos")
+            if "xfailed" in summary:
+                parts.append(f"{summary['xfailed']} fueron xfailed")
+            if "xpassed" in summary:
+                parts.append(f"{summary['xpassed']} fueron xpassed")
+            lines.append(f"- Resultado: {', '.join(parts)}.")
+        lines.append(f"- Tiempo total: {duration}.")
+        if failed_cases:
+            lines.append("- Tests con falla/error:")
+            lines.extend([f"  - {nodeid}" for nodeid in failed_cases])
+        else:
+            lines.append("- No se detectaron fallas.")
+        return "\n".join(lines)
+
+    lines = ["Pytest natural-language summary"]
+    if collected is not None:
+        lines.append(f"- Collected {collected} tests.")
+    if summary:
+        parts = []
+        if "passed" in summary:
+            parts.append(f"{summary['passed']} passed")
+        if "failed" in summary:
+            parts.append(f"{summary['failed']} failed")
+        if "error" in summary:
+            parts.append(f"{summary['error']} had errors")
+        if "skipped" in summary:
+            parts.append(f"{summary['skipped']} skipped")
+        if "xfailed" in summary:
+            parts.append(f"{summary['xfailed']} xfailed")
+        if "xpassed" in summary:
+            parts.append(f"{summary['xpassed']} xpassed")
+        lines.append(f"- Result: {', '.join(parts)}.")
+    lines.append(f"- Total time: {duration}.")
+    if failed_cases:
+        lines.append("- Failed/error tests:")
+        lines.extend([f"  - {nodeid}" for nodeid in failed_cases])
+    else:
+        lines.append("- No failures detected.")
+    return "\n".join(lines)
+
+
 # --- Main ------------------------------------------------------------------
 
 def main(argv: list[str] | None = None):
@@ -311,6 +570,15 @@ def main(argv: list[str] | None = None):
 
     root = Path(args.path)
 
+    if args.pytest_report:
+        if args.pytest_report == "-":
+            report_text = sys.stdin.read()
+        else:
+            report_text = Path(args.pytest_report).read_text(encoding="utf-8")
+        report = parse_pytest_output(report_text)
+        print(render_natural_pytest_summary(report, i18n.language))
+        return
+
     if not root.exists():
         i18n = get_i18n(args.lang)
         print(clr(f"\n  {i18n.t('error_path_missing', root=root)}\n", RED))
@@ -318,7 +586,15 @@ def main(argv: list[str] | None = None):
 
     spec_files = find_spec_files(root)
     i18n = get_i18n(args.lang, spec_files=spec_files)
-    specs = [parse_spec_file(f, i18n) for f in spec_files]
+    specs = load_specs(root, i18n)
+
+    if args.generate_spec_md:
+        generated = generate_spec_markdown_from_decorators(root, i18n)
+        if generated:
+            print(clr(f"\n  ✓ Generated {len(generated)} .spec.md files from decorators.\n", GREEN))
+        else:
+            print(clr("\n  No @spec decorators were found.\n", YELLOW))
+        return
 
     if args.export:
         if args.export == "md":
