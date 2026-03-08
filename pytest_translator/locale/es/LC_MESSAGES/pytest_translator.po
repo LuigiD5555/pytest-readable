@@ -93,7 +93,7 @@ msgid "exported_to"
 msgstr "Exportado a: {filename}"
 
 msgid "app_banner"
-msgstr "specview - visor de specs para pytest"
+msgstr "pytest-translator - visor interactivo de specs para pytest"
 
 msgid "searching_in"
 msgstr "Buscando en: {root}"

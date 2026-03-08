@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-specview.py - Interactive spec viewer for pytest
+pytest-translator CLI - Interactive spec viewer for pytest
 """
 
 import argparse

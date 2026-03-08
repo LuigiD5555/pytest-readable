@@ -11,8 +11,8 @@ readme = "README.md"
 license = { text = "MIT" }
 
 [project.scripts]
-specview = "pytest_translator.cli:main"
-specview-compile-locales = "pytest_translator.compile_locales:main"
+pytest-translator = "pytest_translator.cli:main"
+pytest-translator-compile-locales = "pytest_translator.compile_locales:main"
 
 [tool.setuptools.packages.find]
 include = ["pytest_translator*"]

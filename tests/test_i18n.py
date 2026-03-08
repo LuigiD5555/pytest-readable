@@ -97,7 +97,7 @@ def test_csv_export_localizes_headers():
 
 
 def test_resolve_language_prefers_explicit_argument(monkeypatch):
-    monkeypatch.setenv("SPECVIEW_LANG", "es_MX.UTF-8")
+    monkeypatch.setenv("PYTEST_TRANSLATOR_LANG", "es_MX.UTF-8")
 
     assert resolve_language("en") == "en"
 
@@ -118,7 +118,7 @@ def test_resolve_language_prefers_spec_content_over_environment(tmp_path, monkey
 
 
 def test_resolve_language_uses_environment_when_auto(monkeypatch):
-    monkeypatch.delenv("SPECVIEW_LANG", raising=False)
+    monkeypatch.delenv("PYTEST_TRANSLATOR_LANG", raising=False)
     monkeypatch.delenv("LC_ALL", raising=False)
     monkeypatch.setenv("LANG", "es_MX.UTF-8")
 
@@ -126,7 +126,7 @@ def test_resolve_language_uses_environment_when_auto(monkeypatch):
 
 
 def test_resolve_language_defaults_to_english(monkeypatch):
-    monkeypatch.delenv("SPECVIEW_LANG", raising=False)
+    monkeypatch.delenv("PYTEST_TRANSLATOR_LANG", raising=False)
     monkeypatch.delenv("LC_ALL", raising=False)
     monkeypatch.delenv("LANG", raising=False)
 
@@ -155,7 +155,7 @@ msgstr ""
 msgid "app_description"
 msgstr "Descripcion de prueba"
 """
-    po_path = tmp_path / "specview.po"
+    po_path = tmp_path / "pytest_translator.po"
     po_path.write_text(po_content, encoding="utf-8")
 
     mo_path = compile_po_file(po_path)

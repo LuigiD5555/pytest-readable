@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 LOCALE_DIR = Path(__file__).with_name("locale")
-DOMAIN = "specview"
+DOMAIN = "pytest_translator"
 
 FIELD_LABELS = {
     "what": {
@@ -67,7 +67,7 @@ def resolve_language(preferred: str | None = None, spec_files: list[Path] | None
             return detected
 
     env_lang = (
-        os.environ.get("SPECVIEW_LANG")
+        os.environ.get("PYTEST_TRANSLATOR_LANG")
         or os.environ.get("LC_ALL")
         or os.environ.get("LANG")
         or ""
