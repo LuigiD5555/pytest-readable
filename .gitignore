@@ -8,3 +8,4 @@ pytest_specview.egg-info
 pytest_translator.egg-info
 .vscode
 temp
+src/pytest_readable.egg-info

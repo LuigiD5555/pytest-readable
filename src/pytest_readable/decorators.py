@@ -10,9 +10,7 @@ def spec(
     steps_en: list[str] | None = None,
     steps_es: list[str] | None = None,
 ):
-    """
-    Attach natural-language spec metadata to a pytest test function.
-    """
+    """Attach readable metadata to a pytest test function."""
     metadata = {
         "title": title,
         "title_en": title_en,

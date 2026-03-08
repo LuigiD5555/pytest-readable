@@ -1,21 +1,29 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pytest-translator"
-version = "0.1.0"
-description = "Interactive natural-language spec viewer for pytest projects"
-requires-python = ">=3.10"
+name = "pytest-readable"
+version = "0.2.0"
+description = "Native pytest plugin that renders readable test specs and exports docs"
+requires-python = ">=3.14"
 readme = "README.md"
 license = { text = "MIT" }
+dependencies = ["pytest>=8.0"]
+
+[project.entry-points.pytest11]
+readable = "pytest_readable.plugin"
 
 [project.scripts]
-pytest-translator = "pytest_translator.cli:main"
-pytest-translator-compile-locales = "pytest_translator.compile_locales:main"
+readable = "pytest_readable.cli:main"
+pytest-readable-compile-locales = "pytest_readable.compile_locales:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-include = ["pytest_translator*"]
+where = ["src"]
+include = ["pytest_readable*"]
 
 [tool.setuptools.package-data]
-pytest_translator = ["locale/*/LC_MESSAGES/*.po", "locale/*/LC_MESSAGES/*.mo"]
+pytest_readable = ["locale/*/LC_MESSAGES/*.po", "locale/*/LC_MESSAGES/*.mo"]

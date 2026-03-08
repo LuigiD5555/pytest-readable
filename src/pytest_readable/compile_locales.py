@@ -1,3 +1,5 @@
+"""PO to MO compiler copied inline for offline localization maintenance."""
+
 import ast
 import struct
 from pathlib import Path
@@ -8,10 +10,12 @@ MAGIC = 0x950412DE
 
 
 def _unquote_po_string(token: str) -> str:
+    """Decode the literal string used inside a PO file entry."""
     return ast.literal_eval(token)
 
 
 def _parse_po(path: Path) -> dict[str, str]:
+    """Read a PO file and return a mapping from msgid to msgstr."""
     catalog: dict[str, str] = {}
     msgid: str | None = None
     msgstr: str | None = None
@@ -52,6 +56,7 @@ def _parse_po(path: Path) -> dict[str, str]:
 
 
 def _compile_catalog(messages: dict[str, str]) -> bytes:
+    """Emit the binary MO catalog format from decoded message pairs."""
     items = sorted(messages.items())
 
     ids = b""
@@ -102,6 +107,7 @@ def _compile_catalog(messages: dict[str, str]) -> bytes:
 
 
 def compile_po_file(po_path: Path) -> Path:
+    """Compile a single `.po` file to a `.mo` binary catalog."""
     mo_path = po_path.with_suffix(".mo")
     catalog = _parse_po(po_path)
     mo_path.write_bytes(_compile_catalog(catalog))
@@ -109,6 +115,7 @@ def compile_po_file(po_path: Path) -> Path:
 
 
 def compile_all_locales(locale_dir: Path = LOCALE_DIR) -> list[Path]:
+    """Compile every `.po` found under the locale directory."""
     compiled = []
     for po_path in sorted(locale_dir.rglob("*.po")):
         compiled.append(compile_po_file(po_path))
@@ -116,6 +123,7 @@ def compile_all_locales(locale_dir: Path = LOCALE_DIR) -> list[Path]:
 
 
 def main() -> None:
+    """Console helper that rebuilds every MO catalog when called."""
     compiled = compile_all_locales()
     for path in compiled:
         print(path)

@@ -1,3 +1,5 @@
+"""i18n helpers that detect the desired language and load gettext catalogs."""
+
 import gettext
 import os
 from dataclasses import dataclass
@@ -5,7 +7,7 @@ from pathlib import Path
 
 
 LOCALE_DIR = Path(__file__).with_name("locale")
-DOMAIN = "pytest_translator"
+DOMAIN = "pytest_readable"
 
 FIELD_LABELS = {
     "what": {
@@ -20,6 +22,7 @@ FIELD_LABELS = {
 
 
 def normalize_language(language: str | None) -> str:
+    """Normalize the language token to 'en', 'es' or 'auto'."""
     if not language or language == "auto":
         return "auto"
     normalized = language.lower()
@@ -29,6 +32,7 @@ def normalize_language(language: str | None) -> str:
 
 
 def detect_language_from_text(text: str) -> str | None:
+    """Guess the language by counting label occurrences in the text."""
     scores = {"en": 0, "es": 0}
     for labels_by_language in FIELD_LABELS.values():
         for language, labels in labels_by_language.items():
@@ -43,6 +47,7 @@ def detect_language_from_text(text: str) -> str | None:
 
 
 def detect_language_from_specs(spec_files: list[Path]) -> str | None:
+    """Survey each spec file to determine the predominant language."""
     scores = {"en": 0, "es": 0}
     for path in spec_files:
         detected = detect_language_from_text(path.read_text(encoding="utf-8"))
@@ -57,6 +62,7 @@ def detect_language_from_specs(spec_files: list[Path]) -> str | None:
 
 
 def resolve_language(preferred: str | None = None, spec_files: list[Path] | None = None) -> str:
+    """Decide which language to use, honoring CLI preference, specs, then env vars."""
     normalized = normalize_language(preferred)
     if normalized != "auto":
         return normalized
@@ -67,7 +73,7 @@ def resolve_language(preferred: str | None = None, spec_files: list[Path] | None
             return detected
 
     env_lang = (
-        os.environ.get("PYTEST_TRANSLATOR_LANG")
+        os.environ.get("PYTEST_READABLE_LANG")
         or os.environ.get("LC_ALL")
         or os.environ.get("LANG")
         or ""
@@ -100,6 +106,7 @@ class I18n:
 
 
 def get_i18n(preferred: str | None = None, spec_files: list[Path] | None = None) -> I18n:
+    """Return an I18n helper configured for the resolved language."""
     language = resolve_language(preferred, spec_files=spec_files)
     translations = gettext.translation(
         DOMAIN,

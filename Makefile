@@ -2,7 +2,7 @@ PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: install install-dev test test-translator-i18n verify-i18n
+.PHONY: install install-dev test test-readable-core verify-core
 
 install:
 	$(PIP) install -e .
@@ -14,7 +14,7 @@ install-dev:
 test:
 	$(PYTEST) -q
 
-test-translator-i18n:
-	$(PYTEST) -q tests/test_i18n.py
+test-readable-core:
+	$(PYTEST) -q tests/test_core.py
 
-verify-i18n: install test-translator-i18n
+verify-core: install test-readable-core
