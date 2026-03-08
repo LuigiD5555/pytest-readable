@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-specview"
+version = "0.1.0"
+description = "Interactive natural-language spec viewer for pytest projects"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.scripts]
+specview = "pytest_specview.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["pytest_specview*"]
