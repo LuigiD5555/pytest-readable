@@ -15,7 +15,7 @@ msgid "test_label"
 msgstr "Test"
 
 msgid "what_label"
-msgstr "Que prueba"
+msgstr "Si prueba"
 
 msgid "steps_label"
 msgstr "Pasos"
@@ -45,7 +45,7 @@ msgid "summary_missing_details"
 msgstr "Sin detalle"
 
 msgid "no_spec_files"
-msgstr "No se encontraron archivos .spec.md"
+msgstr "No se encontraron tests legibles"
 
 msgid "available_specs"
 msgstr "== SPECS DISPONIBLES ========================"
@@ -72,7 +72,7 @@ msgid "no_documented_steps"
 msgstr "(sin pasos documentados)"
 
 msgid "path_help"
-msgstr "Directorio donde se buscaran archivos .spec.md (default: .)"
+msgstr "Directorio donde se buscaran tests (default: .)"
 
 msgid "export_help"
 msgstr "Exportar specs a un archivo (md o csv)"
@@ -93,7 +93,7 @@ msgid "exported_to"
 msgstr "Exportado a: {filename}"
 
 msgid "app_banner"
-msgstr "pytest-translator - visor interactivo de specs para pytest"
+msgstr "pytest-readable - visor interactivo de specs para pytest"
 
 msgid "searching_in"
 msgstr "Buscando en: {root}"

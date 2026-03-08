@@ -36,6 +36,11 @@ pytest --collect-only --readable-tree
 - `--readable-lang=auto|es|en`: output language
 - `--readable-include-steps`: include documented steps in output
 
+`--readable-lang=auto` tries to infer language from `@readable(...)` metadata first,
+then falls back to environment (`PYTEST_READABLE_LANG`, `LC_ALL`, `LANG`).
+`criteria` (and `criteria_en` / `criteria_es`) defines pass conditions shown after
+the step breakdown in detailed output.
+
 Example export:
 
 ```bash
@@ -48,32 +53,45 @@ pytest --readable-docs --readable-format=csv --readable-out=docs/tests-readable.
 Decorator-first metadata:
 
 ```python
-from pytest_readable.decorators import spec
+from pytest_readable.decorators import readable
 
-@spec(
+@readable(
     title_en="Pipeline query works",
     title_es="Pipeline de consulta funciona",
-    what_en="Validates embedding, retrieval and blackboard flow",
-    what_es="Valida el flujo de embedding, retrieval y blackboard",
+    intent_en="Validates embedding, retrieval and blackboard flow",
+    intent_es="Valida el flujo de embedding, retrieval y blackboard",
     steps_en=["Build input", "Run pipeline", "Assert outputs"],
     steps_es=["Construir input", "Ejecutar pipeline", "Validar salidas"],
+    criteria_en=["Returns expected document count", "No runtime errors"],
+    criteria_es=["Retorna el numero esperado de documentos", "No hay errores de ejecucion"],
 )
 def test_query_pipeline():
     ...
 ```
 
-Optional markdown fallback next to the test file:
+Single-language shorthand (same API you asked for):
 
-```markdown
-# test_query_pipeline.py
+```python
+from pytest_readable.decorators import readable
 
-## Pipeline de consulta
-**Qué prueba:** Que el pipeline completo produce resultados coherentes.
-**Pasos:**
-1. Embedding
-2. Retrieval
-3. Blackboard
+@readable(
+    title="test_sample.py",
+    intent="Parses english fields",
+    steps="""
+1. Read the file
+2. Extract the fields
+""",
+    criteria=[
+        "Returns parsed english fields",
+        "Does not raise exceptions",
+    ],
+)
+def test_parse_spec_file_accepts_english_labels(tmp_path):
+    ...
 ```
+
+All readable documentation now lives in decorators (`@readable(...)`) inside test files.
+No `.spec.md` files are used or generated.
 
 ## Optional Helper CLI
 
@@ -81,7 +99,6 @@ Optional markdown fallback next to the test file:
 
 ```bash
 readable -q
-readable --generate-spec-md tests/
 ```
 
 ## Project Layout
@@ -102,5 +119,4 @@ src/
 
 ## Limitations
 
-- Tree hierarchy is based on pytest collection (`module -> class -> test`), enriched by decorator or `.spec.md` metadata.
-- `.spec.md` fallback matching is best-effort when names differ from pytest node ids.
+- Tree hierarchy is based on pytest collection (`module -> class -> test`) and decorator metadata from `@readable(...)`.

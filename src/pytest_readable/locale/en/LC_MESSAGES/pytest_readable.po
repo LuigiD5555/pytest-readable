@@ -45,7 +45,7 @@ msgid "summary_missing_details"
 msgstr "Missing details"
 
 msgid "no_spec_files"
-msgstr "No .spec.md files were found"
+msgstr "No readable tests were found"
 
 msgid "available_specs"
 msgstr "== AVAILABLE SPECS =========================="
@@ -72,7 +72,7 @@ msgid "no_documented_steps"
 msgstr "(no documented steps)"
 
 msgid "path_help"
-msgstr "Directory where .spec.md files will be searched (default: .)"
+msgstr "Directory where tests will be searched (default: .)"
 
 msgid "export_help"
 msgstr "Export specs to a file (md or csv)"
@@ -84,7 +84,7 @@ msgid "all_help"
 msgstr "Show all specs without the interactive menu"
 
 msgid "lang_help"
-msgstr "Output language: en, es, or auto-detect from the environment/spec content"
+msgstr "Output language: en, es, or auto-detect from environment"
 
 msgid "error_path_missing"
 msgstr "Error: '{root}' does not exist."
@@ -93,7 +93,7 @@ msgid "exported_to"
 msgstr "Exported to: {filename}"
 
 msgid "app_banner"
-msgstr "pytest-translator - interactive spec viewer for pytest"
+msgstr "pytest-readable - interactive spec viewer for pytest"
 
 msgid "searching_in"
 msgstr "Searching in: {root}"
