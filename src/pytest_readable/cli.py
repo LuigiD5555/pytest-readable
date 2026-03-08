@@ -39,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     pytest_args = list(args.pytest_args)
+    if pytest_args and pytest_args[0] == "pytest":
+        pytest_args.pop(0)
     if not any(part.startswith("--readable") for part in pytest_args):
         pytest_args.insert(0, "--readable")
 
