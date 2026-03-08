@@ -1,14 +1,14 @@
 # pytest-translator
 
-Interactive test documentation viewer for pytest projects. It reads natural-language metadata from `@spec(...)` decorators (preferred source), falls back to `.spec.md` files when needed, and presents everything in the terminal with navigation, coverage summaries, and export support.
+Interactive natural-language spec viewer for pytest projects. It reads structured metadata from `@spec(...)` decorators first, falls back to `.spec.md` documents generated next to each test file, and renders everything in the terminal with navigation, coverage summaries, and export support.
 
-Specs can be written in English or Spanish. The parser accepts both `What it tests`/`Steps` and `Qué prueba`/`Pasos`, and the CLI/export language can be selected with `--lang en|es` or auto-detected from the spec content first, then from the environment (`SPECVIEW_LANG`, `LC_ALL`, or `LANG`).
+Specs can be written in English or Spanish. The parser recognizes both `What it tests`/`Steps` and `Qué prueba`/`Pasos`, and the CLI/export language can be set with `--lang en|es` or auto-detected from the spec content first, then from the environment (`PYTEST_TRANSLATOR_LANG`, `LC_ALL`, or `LANG`).
 
 ---
 
 ## What problem it solves
 
-Pytest tests often have technical names (`test_embed_handles_empty_string`) and code that needs extra context to understand. `pytest-translator` adds a parallel documentation layer driven by decorators in the test code, with optional generated `.spec.md` artifacts.
+Pytest tests usually carry technical identifiers like `test_embed_handles_empty_string` and only make sense when you read the code. `pytest-translator` layers a human-readable narrative on top of those tests by letting you document behavior with decorators or `.spec.md` artifacts. Files look like this:
 
 ```
 tests/
@@ -18,127 +18,88 @@ tests/
 
 ---
 
-## Installation
+## Quick start
 
-### From PyPI (once published)
+1. **Install the tool.**
+   ```bash
+   python3 -m pip install -e .
+   ```
+   This registers the `pytest-translator` CLI (and `pytest-translator-compile-locales`) inside your active `test_translator` environment.
 
-```bash
-pip install pytest-translator
-```
+2. **Describe tests in human-readable language.** Prefer the decorator-first workflow: import the helper, add language-specific labels, and keep tests readable without touching assertions.
+   ```python
+   from pytest_translator.decorators import spec
 
-### From the repository (local development install)
+   @spec(
+       title_en="Handles empty payload",
+       title_es="Maneja carga vacia",
+       what_en="Returns a controlled validation error",
+       what_es="Devuelve un error de validacion controlado",
+       steps_en=["Send empty payload", "Assert ValueError"],
+       steps_es=["Enviar carga vacia", "Validar ValueError"],
+   )
+   def test_empty_payload():
+       ...
+   ```
+   If you need shareable documents, `pytest-translator --generate-spec-md tests/` materializes `.spec.md` files from decorators.
 
-```bash
-git clone <repo-url>
-cd pytest-translator
-pip install -e .
-```
-
-The `-e` option installs in editable mode, so any source code change is reflected without reinstalling.
-
-### Verify the installation
-
-```bash
-specview --help
-specview-compile-locales
-```
-
-Requirements: Python 3.10 or newer. No external dependencies - stdlib only.
-
-For tests, prefer `python3 -m pytest` to ensure the same interpreter used by pip install is used for test execution.
+3. **Explore specs through the CLI.**
+   ```bash
+   pytest-translator tests/
+   ```
+   The interactive menu lists spec sources, shows coverage, and lets you inspect any test. Add `--lang es` to force Spanish output or rely on auto-detection.
 
 ---
 
-## Usage
+## CLI usage
 
 ### Interactive mode (default)
 
 ```bash
-specview                  # search for .spec.md from the current directory
-specview tests/           # search in a specific folder
-specview --lang es tests/ # render the UI and exports in Spanish
-SPECVIEW_LANG=es specview # use environment-driven Spanish output
+pytest-translator [path]
 ```
 
-It shows a numbered menu with every spec file found. You can navigate to a specific file and then to an individual test.
-
-```
-== AVAILABLE SPECS ==========================
-  [1] test_embedder.py  (3 tests)
-  [2] test_pipeline.py  (2 tests)
-
-  [a] View all  [q] Quit
-
-  Choose a number: _
-```
+Runs the interactive browser with numbered menus, coverage summaries, and a detail submenu per test. Omit `path` to search the current directory. While viewing, press `a` to render all specs, `q` to quit, or a number to open a single file.
 
 ### Show everything at once
 
 ```bash
-specview --all tests/
+pytest-translator --all tests/
 ```
 
-It prints every spec in sequence and finishes with a coverage summary:
+Prints every spec sequentially followed by the coverage summary, which is handy for logging or CI checks.
 
-```
-== SUMMARY ==================================
-  Spec files      : 2
-  Total tests     : 5
-  Documented      : 5
-```
-
-### Decorator-first workflow (recommended)
-
-```python
-from pytest_translator.decorators import spec
-
-@spec(
-    title_en="Handles empty payload",
-    title_es="Maneja carga vacia",
-    what_en="Returns a controlled validation error",
-    what_es="Devuelve un error de validacion controlado",
-    steps_en=["Send empty payload", "Assert ValueError"],
-    steps_es=["Enviar carga vacia", "Validar ValueError"],
-)
-def test_empty_payload():
-    ...
-```
-
-You can generate `.spec.md` files from decorators when you need shareable docs:
+### Export docs to Markdown or CSV
 
 ```bash
-specview --generate-spec-md tests/
+pytest-translator --export md tests/
+pytest-translator --export csv --output docs/specs.csv tests/
 ```
 
-### Export
+Exports combine every spec with localized headings. Use `--lang es` to render Spanish labels and column headers.
+
+### Generate `.spec.md` files from decorators
 
 ```bash
-specview --export md tests/              # generates specs_YYYYMMDD_HHMM.md
-specview --export csv tests/             # generates specs_YYYYMMDD_HHMM.csv
-specview --export md --output docs/specs.md tests/   # custom name
+pytest-translator --generate-spec-md tests/
 ```
 
-The exported Markdown groups all specs into a single navigable file. The CSV includes the columns `File`, `Test`, `What it tests`, and `Steps`, which is useful for importing into Notion, Jira, or spreadsheets.
+Iterates over `test_*.py` and `*_test.py` files that declare `@spec(...)`, writes Markdown files next to them, and reports how many were created.
 
-When `--lang es` is used, export headings and CSV headers are also generated in Spanish.
-
-If `--lang auto` is used, `specview` first looks at the spec labels it finds (`What it tests`/`Steps` vs `Qué prueba`/`Pasos`) and then falls back to your environment if the content is mixed or ambiguous.
-
-## Locale maintenance
-
-If you edit the gettext catalogs in `pytest-translator/locale/*/LC_MESSAGES/*.po`, recompile the binary `.mo` files with:
+### Render a natural-language pytest summary
 
 ```bash
-specview-compile-locales
+pytest-translator --pytest-report pytest.log
+cat pytest.log | pytest-translator --pytest-report -
 ```
 
-That command regenerates every `.mo` file from the checked-in `.po` sources, so runtime translations stay in sync with your edits.
+Parses raw pytest output, counts statuses, lists failed nodeids, and emits a short summary in English or Spanish depending on `--lang` or `PYTEST_TRANSLATOR_LANG`.
 
 ---
 
 ## `.spec.md` file format
 
-Each test file has a matching `.spec.md` file in the same directory:
+Each test file can live next to a `.spec.md` twin that describes every test in human language:
 
 ```markdown
 # test_file_name.py
@@ -151,7 +112,7 @@ Each test file has a matching `.spec.md` file in the same directory:
 3. What is verified at the end
 ```
 
-Spanish labels are also valid:
+Spanish labels are also accepted:
 
 ```markdown
 # test_file_name.py
@@ -164,22 +125,7 @@ Spanish labels are also valid:
 3. Qué se verifica al final
 ```
 
-### Real example
-
-```markdown
-# test_query_pipeline.py
-
-## Retrieves the top-k most relevant documents for a query
-**What it tests:** The retriever returns exactly k documents ordered by score
-**Steps:**
-1. Insert 10 test documents into Weaviate
-2. Run a query with k=3
-3. Verify that exactly 3 results are returned
-4. Verify they are ordered from highest to lowest relevance
-5. Clean up the test documents at the end
-```
-
-### Naming rules
+Naming rules keep specs aligned with their test modules:
 
 | Test file                      | Spec file                           |
 |--------------------------------|-------------------------------------|
@@ -189,76 +135,35 @@ Spanish labels are also valid:
 
 ---
 
-## Package structure
+## Locale maintenance
 
-```
-pytest-translator/
-├── pyproject.toml              <- package metadata and CLI entry point
-├── README.md
-└── pytest-translator/
-    ├── __init__.py             <- package version
-    ├── locale/                <- gettext catalogs (.po/.mo) for en/es
-    └── cli.py                  <- all logic (parsing, rendering, export)
+If you edit the gettext catalogs under `pytest_translator/locale/*/LC_MESSAGES/`, recompile them with the helper that ships in `pathlib` style:
+
+```bash
+pytest-translator-compile-locales
 ```
 
-### Internal modules in `cli.py`
+This command rewrites every `.mo` from the checked-in `.po` files, keeping translations synchronized.
 
-| Function | What it does |
-|---|---|
-| `find_spec_files(root)` | Recursively searches for all `*.spec.md` files under a directory |
-| `parse_spec_file(path)` | Parses a `.spec.md` and returns a dict with `title` and `tests[]` |
-| `render_spec(spec)` | Prints a spec in the terminal with ANSI colors |
-| `render_summary(specs)` | Shows the total count of tests and documented entries |
-| `interactive_mode(specs)` | Main navigation menu |
-| `_test_detail_menu(spec)` | Submenu for an individual test |
-| `export_markdown(specs)` | Serializes all specs to Markdown |
-| `export_csv(specs)` | Serializes all specs to CSV |
-| `main()` | Entry point: parses args and dispatches the right mode |
-
-The `.spec.md` parser works line by line with three patterns:
-- `# text` -> file title (H1, only the first one)
-- `## text` -> new test block (H2)
-- `**What it tests:**` / `**Qué prueba:**` and `**Steps:**` / `**Pasos:**` -> fields inside each block
-
----
-
-## Integration with Claude Code (pytest-spec skill)
-
-The repository includes a skill for Claude Code that automatically generates the `.spec.md` whenever a test is written or modified:
-
-```
-.claude/skills/pytest-spec/SKILL.md
-```
-
-With the skill enabled, when you ask Claude Code to write or modify tests, it generates the spec in the same step and reports:
-
-```
-✓ Test written to tests/test_embedder.py
-✓ Spec updated at tests/test_embedder.spec.md
-```
-
-To enable it, the project's `CLAUDE.md` should include:
-
-```markdown
-## Skills
-- .claude/skills/pytest-spec/SKILL.md - Generates readable specs alongside each pytest test
-```
+If you prefer environment-driven language selection, set `PYTEST_TRANSLATOR_LANG` to `en` or `es`. It takes precedence over `LC_ALL` and `LANG`.
 
 ---
 
 ## Full options
 
 ```
-specview [path] [--export {md,csv}] [--output FILE] [--all] [--lang {auto,en,es}] [--generate-spec-md]
+pytest-translator [path] [--export {md,csv}] [--output FILE] [--all] [--lang {auto,en,es}] [--generate-spec-md] [--pytest-report FILE]
+```
 
 Arguments:
-  path                  Directory where .spec.md files are searched (default: .)
+- `path` &nbsp;&nbsp;&nbsp;&nbsp; Directory where specs are searched (default: `.`)
 
 Options:
-  --all                 Show all specs without the interactive menu
-  --export {md,csv}     Export to Markdown or CSV
-  --output FILE         Output file name for --export
-  --lang {auto,en,es}   Output language for UI and exports
-  --generate-spec-md    Generate .spec.md files from @spec decorators
-  -h, --help            Show this help message
+- `--export {md,csv}` &nbsp;&nbsp; Export to Markdown or CSV
+- `--output FILE` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Output file name for `--export`
+- `--all` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Print every spec immediately
+- `--lang {auto,en,es}` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Output language for UI and exports
+- `--generate-spec-md` &nbsp;&nbsp; Generate `.spec.md` files from decorated tests
+- `--pytest-report FILE` &nbsp;&nbsp; Render a natural-language summary from raw pytest output (`-` reads stdin)
+- `-h, --help` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Show this help message
 ```

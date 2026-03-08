@@ -31,7 +31,7 @@
 ## Prioriza idioma explicito sobre entorno
 **Qué prueba:** Que la resolucion de idioma usa el argumento explicito por encima de variables de entorno.
 **Pasos:**
-1. Define `SPECVIEW_LANG` con valor espanol
+1. Define `PYTEST_TRANSLATOR_LANG` con valor espanol
 2. Llama `resolve_language` con argumento `en`
 3. Verifica que el resultado final sea ingles
 
@@ -53,7 +53,7 @@
 ## Usa ingles por defecto sin configuracion
 **Qué prueba:** Que la resolucion de idioma vuelve a ingles cuando no hay argumento ni variables de entorno.
 **Pasos:**
-1. Limpia `SPECVIEW_LANG`, `LC_ALL` y `LANG`
+1. Limpia `PYTEST_TRANSLATOR_LANG`, `LC_ALL` y `LANG`
 2. Llama `resolve_language` sin argumentos
 3. Verifica que el resultado sea `en`
 
