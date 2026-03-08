@@ -1,6 +1,6 @@
 # pytest-translator
 
-Interactive test documentation viewer for pytest projects. It reads `.spec.md` files - natural-language documentation stored alongside each test file - and presents them in the terminal with navigation, coverage summaries, and export support.
+Interactive test documentation viewer for pytest projects. It reads natural-language metadata from `@spec(...)` decorators (preferred source), falls back to `.spec.md` files when needed, and presents everything in the terminal with navigation, coverage summaries, and export support.
 
 Specs can be written in English or Spanish. The parser accepts both `What it tests`/`Steps` and `Qué prueba`/`Pasos`, and the CLI/export language can be selected with `--lang en|es` or auto-detected from the spec content first, then from the environment (`SPECVIEW_LANG`, `LC_ALL`, or `LANG`).
 
@@ -8,12 +8,12 @@ Specs can be written in English or Spanish. The parser accepts both `What it tes
 
 ## What problem it solves
 
-Pytest tests often have technical names (`test_embed_handles_empty_string`) and code that needs extra context to understand. `pytest-translator` adds a parallel documentation layer: `.spec.md` files that explain in human language what each test verifies, without touching the code.
+Pytest tests often have technical names (`test_embed_handles_empty_string`) and code that needs extra context to understand. `pytest-translator` adds a parallel documentation layer driven by decorators in the test code, with optional generated `.spec.md` artifacts.
 
 ```
 tests/
 ├── test_embedder.py          <- test code
-└── test_embedder.spec.md     <- readable documentation
+└── test_embedder.spec.md     <- optional generated readable documentation
 ```
 
 ---
@@ -85,6 +85,29 @@ It prints every spec in sequence and finishes with a coverage summary:
   Spec files      : 2
   Total tests     : 5
   Documented      : 5
+```
+
+### Decorator-first workflow (recommended)
+
+```python
+from pytest_translator.decorators import spec
+
+@spec(
+    title_en="Handles empty payload",
+    title_es="Maneja carga vacia",
+    what_en="Returns a controlled validation error",
+    what_es="Devuelve un error de validacion controlado",
+    steps_en=["Send empty payload", "Assert ValueError"],
+    steps_es=["Enviar carga vacia", "Validar ValueError"],
+)
+def test_empty_payload():
+    ...
+```
+
+You can generate `.spec.md` files from decorators when you need shareable docs:
+
+```bash
+specview --generate-spec-md tests/
 ```
 
 ### Export
@@ -226,7 +249,7 @@ To enable it, the project's `CLAUDE.md` should include:
 ## Full options
 
 ```
-specview [path] [--export {md,csv}] [--output FILE] [--all] [--lang {auto,en,es}]
+specview [path] [--export {md,csv}] [--output FILE] [--all] [--lang {auto,en,es}] [--generate-spec-md]
 
 Arguments:
   path                  Directory where .spec.md files are searched (default: .)
@@ -236,5 +259,6 @@ Options:
   --export {md,csv}     Export to Markdown or CSV
   --output FILE         Output file name for --export
   --lang {auto,en,es}   Output language for UI and exports
+  --generate-spec-md    Generate .spec.md files from @spec decorators
   -h, --help            Show this help message
 ```
