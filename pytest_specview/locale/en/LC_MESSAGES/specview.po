@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: pytest-specview 0.1.0\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "app_description"
+msgstr "Interactive spec viewer for pytest"
+
+msgid "test_specs_title"
+msgstr "Test Specs"
+
+msgid "test_label"
+msgstr "Test"
+
+msgid "what_label"
+msgstr "What it tests"
+
+msgid "steps_label"
+msgstr "Steps"
+
+msgid "file_label"
+msgstr "File"
+
+msgid "generated_on"
+msgstr "Generated on"
+
+msgid "no_documented_tests"
+msgstr "(no documented tests)"
+
+msgid "summary_title"
+msgstr "== SUMMARY =================================="
+
+msgid "summary_spec_files"
+msgstr "Spec files"
+
+msgid "summary_total_tests"
+msgstr "Total tests"
+
+msgid "summary_documented"
+msgstr "Documented"
+
+msgid "summary_missing_details"
+msgstr "Missing details"
+
+msgid "no_spec_files"
+msgstr "No .spec.md files were found"
+
+msgid "available_specs"
+msgstr "== AVAILABLE SPECS =========================="
+
+msgid "view_all_quit"
+msgstr "[a] View all  [q] Quit"
+
+msgid "choose_number"
+msgstr "Choose a number: "
+
+msgid "number_out_of_range"
+msgstr "Number out of range."
+
+msgid "invalid_option"
+msgstr "Invalid option."
+
+msgid "detail_menu"
+msgstr "[number] View a specific test  [b] Back"
+
+msgid "detail_prompt"
+msgstr "-> "
+
+msgid "no_documented_steps"
+msgstr "(no documented steps)"
+
+msgid "path_help"
+msgstr "Directory where .spec.md files will be searched (default: .)"
+
+msgid "export_help"
+msgstr "Export specs to a file (md or csv)"
+
+msgid "output_help"
+msgstr "Output file name (optional, auto-generates one if omitted)"
+
+msgid "all_help"
+msgstr "Show all specs without the interactive menu"
+
+msgid "lang_help"
+msgstr "Output language: en, es, or auto-detect from the environment/spec content"
+
+msgid "error_path_missing"
+msgstr "Error: '{root}' does not exist."
+
+msgid "exported_to"
+msgstr "Exported to: {filename}"
+
+msgid "app_banner"
+msgstr "specview - pytest spec viewer"
+
+msgid "searching_in"
+msgstr "Searching in: {root}"

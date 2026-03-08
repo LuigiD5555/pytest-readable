@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: pytest-specview 0.1.0\n"
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "app_description"
+msgstr "Visor interactivo de specs para pytest"
+
+msgid "test_specs_title"
+msgstr "Especificaciones de tests"
+
+msgid "test_label"
+msgstr "Test"
+
+msgid "what_label"
+msgstr "Que prueba"
+
+msgid "steps_label"
+msgstr "Pasos"
+
+msgid "file_label"
+msgstr "Archivo"
+
+msgid "generated_on"
+msgstr "Generado el"
+
+msgid "no_documented_tests"
+msgstr "(sin tests documentados)"
+
+msgid "summary_title"
+msgstr "== RESUMEN =================================="
+
+msgid "summary_spec_files"
+msgstr "Archivos spec"
+
+msgid "summary_total_tests"
+msgstr "Tests totales"
+
+msgid "summary_documented"
+msgstr "Documentados"
+
+msgid "summary_missing_details"
+msgstr "Sin detalle"
+
+msgid "no_spec_files"
+msgstr "No se encontraron archivos .spec.md"
+
+msgid "available_specs"
+msgstr "== SPECS DISPONIBLES ========================"
+
+msgid "view_all_quit"
+msgstr "[a] Ver todos  [q] Salir"
+
+msgid "choose_number"
+msgstr "Elige un numero: "
+
+msgid "number_out_of_range"
+msgstr "Numero fuera de rango."
+
+msgid "invalid_option"
+msgstr "Opcion no valida."
+
+msgid "detail_menu"
+msgstr "[numero] Ver test especifico  [b] Volver"
+
+msgid "detail_prompt"
+msgstr "-> "
+
+msgid "no_documented_steps"
+msgstr "(sin pasos documentados)"
+
+msgid "path_help"
+msgstr "Directorio donde se buscaran archivos .spec.md (default: .)"
+
+msgid "export_help"
+msgstr "Exportar specs a un archivo (md o csv)"
+
+msgid "output_help"
+msgstr "Nombre del archivo de salida (opcional, genera uno automatico)"
+
+msgid "all_help"
+msgstr "Mostrar todos los specs sin menu interactivo"
+
+msgid "lang_help"
+msgstr "Idioma de salida: en, es, o deteccion automatica por entorno/contenido"
+
+msgid "error_path_missing"
+msgstr "Error: '{root}' no existe."
+
+msgid "exported_to"
+msgstr "Exportado a: {filename}"
+
+msgid "app_banner"
+msgstr "specview - visor de specs para pytest"
+
+msgid "searching_in"
+msgstr "Buscando en: {root}"

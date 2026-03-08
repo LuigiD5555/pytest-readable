@@ -12,6 +12,10 @@ license = { text = "MIT" }
 
 [project.scripts]
 specview = "pytest_specview.cli:main"
+specview-compile-locales = "pytest_specview.compile_locales:main"
 
 [tool.setuptools.packages.find]
 include = ["pytest_specview*"]
+
+[tool.setuptools.package-data]
+pytest_specview = ["locale/*/LC_MESSAGES/*.po", "locale/*/LC_MESSAGES/*.mo"]
