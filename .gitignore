@@ -10,3 +10,4 @@ pytest_translator.egg-info
 temp
 src/pytest_readable.egg-info
 .lh
+.pytest_cache
