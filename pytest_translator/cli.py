@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from pytest_specview.i18n import get_i18n
+from pytest_translator.i18n import get_i18n
 
 
 # --- ANSI colors -----------------------------------------------------------

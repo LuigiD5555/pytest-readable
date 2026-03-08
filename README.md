@@ -1,4 +1,4 @@
-# pytest-specview
+# pytest-translator
 
 Interactive test documentation viewer for pytest projects. It reads `.spec.md` files - natural-language documentation stored alongside each test file - and presents them in the terminal with navigation, coverage summaries, and export support.
 
@@ -8,7 +8,7 @@ Specs can be written in English or Spanish. The parser accepts both `What it tes
 
 ## What problem it solves
 
-Pytest tests often have technical names (`test_embed_handles_empty_string`) and code that needs extra context to understand. `pytest-specview` adds a parallel documentation layer: `.spec.md` files that explain in human language what each test verifies, without touching the code.
+Pytest tests often have technical names (`test_embed_handles_empty_string`) and code that needs extra context to understand. `pytest-translator` adds a parallel documentation layer: `.spec.md` files that explain in human language what each test verifies, without touching the code.
 
 ```
 tests/
@@ -23,14 +23,14 @@ tests/
 ### From PyPI (once published)
 
 ```bash
-pip install pytest-specview
+pip install pytest-translator
 ```
 
 ### From the repository (local development install)
 
 ```bash
 git clone <repo-url>
-cd pytest-specview
+cd pytest-translator
 pip install -e .
 ```
 
@@ -44,6 +44,8 @@ specview-compile-locales
 ```
 
 Requirements: Python 3.10 or newer. No external dependencies - stdlib only.
+
+For tests, prefer `python3 -m pytest` to ensure the same interpreter used by pip install is used for test execution.
 
 ---
 
@@ -101,7 +103,7 @@ If `--lang auto` is used, `specview` first looks at the spec labels it finds (`W
 
 ## Locale maintenance
 
-If you edit the gettext catalogs in `pytest_specview/locale/*/LC_MESSAGES/*.po`, recompile the binary `.mo` files with:
+If you edit the gettext catalogs in `pytest-translator/locale/*/LC_MESSAGES/*.po`, recompile the binary `.mo` files with:
 
 ```bash
 specview-compile-locales
@@ -167,10 +169,10 @@ Spanish labels are also valid:
 ## Package structure
 
 ```
-pytest-specview/
+pytest-translator/
 ├── pyproject.toml              <- package metadata and CLI entry point
 ├── README.md
-└── pytest_specview/
+└── pytest-translator/
     ├── __init__.py             <- package version
     ├── locale/                <- gettext catalogs (.po/.mo) for en/es
     └── cli.py                  <- all logic (parsing, rendering, export)
