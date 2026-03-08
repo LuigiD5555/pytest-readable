@@ -9,3 +9,4 @@ pytest_translator.egg-info
 .vscode
 temp
 src/pytest_readable.egg-info
+.lh
