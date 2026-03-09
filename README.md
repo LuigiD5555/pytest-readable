@@ -120,3 +120,8 @@ src/
 ## Limitations
 
 - Tree hierarchy is based on pytest collection (`module -> class -> test`) and decorator metadata from `@readable(...)`.
+
+## Language-focused tests
+
+- Some plugin tests are gated behind language flags to keep the main run clean: `--readable-lang=en`, `--readable-lang=es`, and `--readable-lang=auto`.  
+- They are implemented via markers in `tests/conftest.py` (`en_lang_only`, `es_lang_only`, `auto_lang_only`), so changes to those tests should be done with those modes in mind.
