@@ -1,16 +1,35 @@
-# pytest-readable
+# pytest-readable  
+  
+Turn pytest tests into readable specifications and documentation.  
+  
+`pytest-readable` is a lightweight pytest plugin that converts collected tests into human-readable summaries and structured documentation.  
+  
+Instead of treating tests only as code, the plugin allows tests to behave like **executable specifications** by attaching human-friendly metadata using decorators.  
+  
+The plugin can generate:  
+  
+- readable CLI summaries  
+- hierarchical test trees  
+- Markdown documentation  
+- CSV exports  
+  
+This helps keep **tests, documentation, and specifications aligned**, making test suites easier to understand for developers, teams, and AI-assisted tooling.  
+  
+---  
 
-Native pytest plugin that turns collected tests into a readable summary/tree and exports docs.
+## Compatibility
 
-## Installation
+- Python 3.10+
+- pytest 9.x
 
-```bash
+## Installation  
+  
+```bash  
 pip install pytest-readable
-```
 
 For local development:
 
-```bash
+``` Bash
 pip install -e .
 ```
 

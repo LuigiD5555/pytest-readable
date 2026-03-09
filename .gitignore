@@ -13,3 +13,4 @@ src/pytest_readable.egg-info
 .pytest_cache
 docs/
 build
+Makefile
