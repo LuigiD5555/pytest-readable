@@ -55,15 +55,18 @@ class I18n:
     translations: gettext.NullTranslations
 
     def t(self, message: str, **kwargs) -> str:
+        """Translate `message` and format it with `kwargs` when provided."""
         text = self.translations.gettext(message)
         if kwargs:
             return text.format(**kwargs)
         return text
 
     def field_label(self, key: str) -> str:
+        """Return the localized label for `key`, e.g., 'what_label'."""
         return self.t(f"{key}_label")
 
     def accepted_field_labels(self, key: str) -> tuple[str, ...]:
+        """Gather every supported-language label variant that maps to `key`."""
         labels: list[str] = []
         for language in supported_languages():
             pack = get_language_pack(language)

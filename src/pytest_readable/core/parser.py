@@ -255,6 +255,7 @@ def _pick_value(metadata: dict[str, Any], key: str, language: str) -> str:
 
 
 def _text_chunks(value: Any) -> list[str]:
+    """Normalize metadata entries into a list of non-empty strings."""
     if isinstance(value, str) and value.strip():
         return [value]
     if isinstance(value, list):

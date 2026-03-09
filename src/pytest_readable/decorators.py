@@ -52,6 +52,7 @@ def readable(
     }
 
     def _decorator(function):
+        """Attach the collected metadata to `function` and return it."""
         function.__spec_meta__ = metadata
         return function
 

@@ -24,6 +24,7 @@ class ReadableRuntimePlugin:
     """Handles pytest hooks that produce readable output and exports."""
 
     def __init__(self, config):
+        """Initialize plugin configuration and runtime caches."""
         self.config = config
         self.suite = None
         self.i18n = None
@@ -120,6 +121,7 @@ class ReadableRuntimePlugin:
         terminal_reporter.write_line(f"readable docs exported: {written}")
 
     def pytest_collection_finish(self, session):
+        """Build the readable suite after collection and optionally render during `--collect-only`."""
         if not self._enabled():
             return
 
@@ -145,6 +147,7 @@ class ReadableRuntimePlugin:
             self.rendered_in_collect_only = True
 
     def pytest_runtest_logreport(self, report):
+        """Map pytest reports to readable case statuses once each test call finishes."""
         if not self._enabled() or self.suite is None:
             return
 
@@ -161,6 +164,7 @@ class ReadableRuntimePlugin:
                 break
 
     def pytest_terminal_summary(self, terminalreporter):
+        """Show the readable summary when pytest completes, unless collect-only already printed it."""
         if not self._enabled():
             return
 
@@ -186,7 +190,7 @@ class ReadableRuntimePlugin:
 
 
 def pytest_addoption(parser):
-    """Register the CLI flags that control readable output and exports."""
+    """Register CLI options that control readable output, tree view, and exports."""
     group = parser.getgroup("readable")
     group.addoption("--readable", action="store_true", help="Print a readable pytest summary")
     group.addoption("--readable-tree", action="store_true", help="Print the collected tests as a hierarchy")

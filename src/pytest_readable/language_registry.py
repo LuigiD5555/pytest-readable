@@ -37,10 +37,12 @@ _LANGUAGE_REGISTRY: dict[str, LanguagePack] = {}
 
 
 def _default_accepted_labels(label: str) -> tuple[str, str]:
+    """Return two bold Markdown variants for a given label to recognize localized input."""
     return (f"**{label}:**", f"**{label}**:")
 
 
 def _build_language_pack(code: str, base: str | None, payload: dict[str, Any]) -> LanguagePack:
+    """Assemble and validate a language pack from overrides and optional base values."""
     merged: dict[str, Any] = {}
     if base and base in _LANGUAGE_REGISTRY:
         merged.update(asdict(_LANGUAGE_REGISTRY[base]))
@@ -81,6 +83,7 @@ def language_pack(code: str, *, base: str | None = None, **overrides: Any) -> Ca
     """Decorator that registers a language pack using optional base inheritance."""
 
     def _decorator(factory: LanguagePackFactory) -> LanguagePackFactory:
+        """Build and register a language pack from `factory` output."""
         factory_payload = factory() or {}
         payload = dict(factory_payload)
         payload.update(overrides)
@@ -135,6 +138,7 @@ def readable_summary_titles() -> set[str]:
 
 @language_pack("en")
 def _register_english() -> dict[str, Any]:
+    """Provide the canonical English text values that other languages can base on."""
     return {
         "summary_title": "Readable summary",
         "list_title": "Detailed list",
@@ -194,4 +198,5 @@ def _register_english() -> dict[str, Any]:
     accepted_steps_labels=("**Pasos:**", "**Pasos**:"),
 )
 def _register_spanish() -> dict[str, Any] | None:
+    """Define the Spanish overrides atop the English base pack."""
     return None

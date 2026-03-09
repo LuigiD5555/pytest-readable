@@ -16,10 +16,12 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _strip_ansi(text: str) -> str:
+    """Return `text` without ANSI escape sequences so pytest sections parse cleanly."""
     return ANSI_RE.sub("", text)
 
 
 def _extract_report_section(text: str, title: str) -> str:
+    """Return the block starting at `title` from pytest output, trimmed of summary footers."""
     pattern = rf"(?ms)^=+\s*{re.escape(title)}\s*=+\n.*?(?=^=+\s*.+?\s*=+\n|\Z)"
     match = re.search(pattern, text)
     if not match:
@@ -32,6 +34,7 @@ def _extract_report_section(text: str, title: str) -> str:
 
 
 def _print_wrapped_output(stdout_text: str, stderr_text: str, returncode: int) -> None:
+    """Dump the most relevant pytest summaries to stdout/stderr while honoring returncode."""
     chunks: list[str] = []
     if returncode != 0:
         for title in ("FAILURES", "warnings summary", "short test summary info"):

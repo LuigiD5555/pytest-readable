@@ -11,6 +11,7 @@ from pytest_readable.language_registry import get_language_pack
 
 
 def _status_label(status: str, language: str) -> str:
+    """Return the localized label associated with `status` in `language`."""
     labels = get_language_pack(language).status_labels
     return labels.get(status, labels["unknown"])
 
