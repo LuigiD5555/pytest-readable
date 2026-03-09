@@ -5,11 +5,35 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pytest-readable"
 version = "0.1.0"
-description = "Native pytest plugin that renders readable test specs and exports docs"
-requires-python = ">=3.10"
+description = "Pytest plugin that renders readable test specifications and exports documentation"
 readme = "README.md"
-license = { text = "MIT" }
-dependencies = ["pytest>=9.0,<10.0"]
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "José Luis López López Prieto" }
+]
+keywords = ["pytest", "testing", "documentation", "tdd", "plugin", "specifications"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: Pytest",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Documentation",
+]
+
+dependencies = [
+  "pytest>=9.0,<10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/TU-USUARIO/pytest-readable"
+Repository = "https://github.com/TU-USUARIO/pytest-readable"
+Issues = "https://github.com/TU-USUARIO/pytest-readable/issues"
 
 [project.entry-points.pytest11]
 readable = "pytest_readable.plugin"
