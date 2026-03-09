@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-from pytest_readable.language_registry import readable_summary_titles, supported_languages
+from pytest_readable.language_registry import supported_languages
 
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -26,24 +26,6 @@ def _extract_report_section(text: str, title: str) -> str:
     return ("\n".join(lines).strip() + "\n") if lines else ""
 
 
-def _extract_readable_block(text: str) -> str:
-    lines = text.splitlines()
-    start = -1
-    summary_titles = readable_summary_titles()
-    for idx, line in enumerate(lines):
-        if _strip_ansi(line).strip() in summary_titles:
-            start = idx
-            break
-    if start < 0:
-        return ""
-
-    block = lines[start:]
-    while block and re.match(r"^\d+\s+.+\s+in\s+[0-9.]+s$", _strip_ansi(block[-1]).strip()):
-        block.pop()
-    while block and not block[-1].strip():
-        block.pop()
-    return ("\n".join(block).strip() + "\n") if block else ""
-
 
 def _print_wrapped_output(stdout_text: str, stderr_text: str, returncode: int) -> None:
     chunks: list[str] = []
@@ -52,10 +34,6 @@ def _print_wrapped_output(stdout_text: str, stderr_text: str, returncode: int) -
             section = _extract_report_section(stdout_text, title)
             if section:
                 chunks.append(section)
-
-    readable = _extract_readable_block(stdout_text)
-    if readable:
-        chunks.append(readable)
 
     if chunks:
         print("\n".join(chunk.strip() for chunk in chunks if chunk.strip()))

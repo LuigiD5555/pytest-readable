@@ -45,21 +45,30 @@ class ReadableRuntimePlugin:
         if self.suite is not None:
             return
 
-        preferred_lang = self.config.getoption("readable_lang")
-        if preferred_lang == "auto":
+        requested_lang = self.config.getoption("readable_lang")
+        preferred_lang = requested_lang
+        if requested_lang == "auto":
             detected = detect_language_from_decorators(Path(self.config.rootpath))
             if detected is not None:
                 preferred_lang = detected
 
         self.i18n = get_i18n(preferred_lang)
-        self.suite = build_suite_from_items(items, Path(self.config.rootpath), self.i18n)
+        self.suite = build_suite_from_items(
+            items,
+            Path(self.config.rootpath),
+            self.i18n,
+            preserve_case_language=requested_lang == "auto",
+        )
 
     def _line_style(self, line: str) -> dict[str, bool]:
         """Return pytest terminal markup flags for a rendered summary line."""
         normalized = line.strip()
         what_prefixes = tuple(f"{get_language_pack(code).what_label}:" for code in supported_languages())
+        criteria_prefixes = tuple(f"{get_language_pack(code).criteria_label}:" for code in supported_languages())
         if normalized.startswith(what_prefixes):
             return {"yellow": True}
+        if normalized.startswith(criteria_prefixes):
+            return {"blue": True}
         for code in supported_languages():
             status_labels = get_language_pack(code).status_labels
             if normalized.startswith(f"- [{status_labels['passed']}]") or normalized.startswith(

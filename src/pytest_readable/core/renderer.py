@@ -41,10 +41,13 @@ def render_summary_text(suite: ReadableSuite, language: str, verbose: int = 0, i
                 lines.append(f"    {case_pack.steps_label}:")
                 for step_idx, step in enumerate(case.steps, 1):
                     lines.append(f"      {step_idx}. {step}")
-            if include_steps and case.criteria:
+            if include_steps or verbose >= 2:
                 lines.append(f"    {case_pack.criteria_label}:")
-                for check_idx, check in enumerate(case.criteria, 1):
-                    lines.append(f"      {check_idx}. {check}")
+                if case.criteria:
+                    for check_idx, check in enumerate(case.criteria, 1):
+                        lines.append(f"      {check_idx}. {check}")
+                else:
+                    lines.append(f"      1. {case_pack.missing_criteria_label}")
 
     lines.append("")
     lines.append(

@@ -310,7 +310,12 @@ def _normalize_function_name(function_name: str) -> str:
     return function_name.replace("test_", "").replace("_", " ").strip() or function_name
 
 
-def build_suite_from_items(items: list[Any], rootdir: Path, i18n: I18n) -> ReadableSuite:
+def build_suite_from_items(
+    items: list[Any],
+    rootdir: Path,
+    i18n: I18n,
+    preserve_case_language: bool = False,
+) -> ReadableSuite:
     """Build a readable suite model that mirrors pytest's collected order."""
     cases: list[ReadableTestCase] = []
     for item in items:
@@ -318,7 +323,9 @@ def build_suite_from_items(items: list[Any], rootdir: Path, i18n: I18n) -> Reada
         class_name = item.cls.__name__ if getattr(item, "cls", None) else ""
         function_name = getattr(item, "originalname", None) or item.name.split("[", 1)[0]
         metadata = getattr(getattr(item, "obj", None), "__spec_meta__", {}) or {}
-        case_language = _infer_metadata_language(metadata, i18n.language)
+        case_language = i18n.language
+        if preserve_case_language:
+            case_language = _infer_metadata_language(metadata, i18n.language)
 
         intent = _pick_value(metadata, "intent", case_language)
         display_name = intent or _pick_value(metadata, "title", case_language) or _normalize_function_name(
