@@ -6,10 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "pytest-readable"
 version = "0.1.0"
 description = "Native pytest plugin that renders readable test specs and exports docs"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = ["pytest>=8.0"]
+dependencies = ["pytest>=9.0,<10.0"]
 
 [project.entry-points.pytest11]
 readable = "pytest_readable.plugin"
