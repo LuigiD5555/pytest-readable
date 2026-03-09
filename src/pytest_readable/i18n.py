@@ -1,3 +1,7 @@
+# Copyright 2026 José Luis López López Prieto and contributors
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 """i18n helpers that detect the desired language and load gettext catalogs."""
 
 import gettext

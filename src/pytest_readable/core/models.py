@@ -1,3 +1,7 @@
+# Copyright 2026 José Luis López López Prieto and contributors
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 """Dataclasses that capture the readable view of pytest tests."""
 
 from dataclasses import dataclass, field

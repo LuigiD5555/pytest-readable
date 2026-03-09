@@ -1,3 +1,7 @@
+# Copyright 2026 José Luis López López Prieto and contributors
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 """Pytest plugin entry point that produces readable summaries and exports."""
 
 from pathlib import Path

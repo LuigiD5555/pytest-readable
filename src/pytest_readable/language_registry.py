@@ -1,3 +1,7 @@
+# Copyright 2026 José Luis López López Prieto and contributors
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 """Language registry used by renderers, CLI wrappers, and option choices."""
 
 from dataclasses import asdict, dataclass, fields

@@ -1,3 +1,7 @@
+# Copyright 2026 José Luis López López Prieto and contributors
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 def _normalize_lines(values: list[str] | str | None) -> list[str]:
     """Accept list or multiline text and return normalized non-empty lines."""
     if values is None:
