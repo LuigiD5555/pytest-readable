@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 ![pytest plugin](https://img.shields.io/badge/pytest-plugin-green)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-![PyPI](https://img.shields.io/pypi/v/pytest-readable)
+![Status](https://img.shields.io/badge/status-pre--release-orange)
 
 `pytest-readable` is a pytest plugin that transforms test suites into **readable specifications and structured documentation**.
 
