@@ -223,6 +223,24 @@ def test_plugin_exports_csv_with_export_flag(pytester):
     result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.csv*"])
 
 
+@readable(
+    intent="Si la exportación se ejecuta aunque exista una prueba fallida.",
+    steps=[
+        "Crea un test temporal que falla",
+        "Ejecuta pytest con --readable y --export=markdown",
+        "Verifica que el archivo de salida se haya creado",
+    ],
+    criteria=[
+        "El archivo markdown se exporta incluso cuando pytest termina con fallo",
+    ],
+)
+def test_plugin_exports_markdown_even_when_tests_fail(pytester):
+    result, out_file = _run_export_docs_with_failure(pytester, "markdown")
+    assert out_file.exists()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.md*"])
+
+
 def _export_markdown_docs(pytester):
     return _run_export_docs(pytester, "markdown")
 
@@ -297,6 +315,26 @@ def _run_export_docs(pytester, format_: str, *, via_export_flag: bool = False):
     result = pytester.runpytest(*args)
     rendered = out_file.read_text(encoding="utf-8") if out_file.exists() else ""
     return result, out_file, rendered
+
+
+def _run_export_docs_with_failure(pytester, format_: str):
+    pytester.makepyfile(
+        test_docs="""
+        def test_failing_case():
+            assert False
+        """
+    )
+    extension = "md" if format_ == "markdown" else "csv"
+    out_file = pytester.path / "docs" / f"tests-readable.{extension}"
+
+    result = pytester.runpytest(
+        "--readable",
+        "--readable-lang=en",
+        f"--export={format_}",
+        f"--readable-out={out_file}",
+        "-q",
+    )
+    return result, out_file
 
 
 @readable(

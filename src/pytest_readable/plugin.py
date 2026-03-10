@@ -29,6 +29,7 @@ class ReadableRuntimePlugin:
         self.suite = None
         self.i18n = None
         self.rendered_in_collect_only = False
+        self._export_done = False
 
     def _enabled(self) -> bool:
         """Return True when any readable flag was requested."""
@@ -128,6 +129,7 @@ class ReadableRuntimePlugin:
 
         written = export_suite(self.suite, out_format, out_path, self.i18n.language)
         terminal_reporter.write_line(f"readable docs exported: {written}")
+        self._export_done = True
 
     def pytest_collection_finish(self, session):
         """Build the readable suite after collection and optionally render during `--collect-only`."""
@@ -196,6 +198,21 @@ class ReadableRuntimePlugin:
 
         self._print_to_terminal(terminalreporter, text)
         self._export_if_requested(terminalreporter)
+
+    def pytest_sessionfinish(self, session, exitstatus):
+        """Fallback export path to keep docs generation independent from test outcomes."""
+        del exitstatus
+        if not self._enabled() or self._export_done:
+            return
+
+        terminal_reporter = self.config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is None:
+            return
+
+        if self.suite is None:
+            self._ensure_suite(getattr(session, "items", []))
+
+        self._export_if_requested(terminal_reporter)
 
 
 def pytest_addoption(parser):
