@@ -37,6 +37,7 @@ class ReadableRuntimePlugin:
                 self.config.getoption("readable"),
                 self.config.getoption("readable_tree"),
                 self.config.getoption("readable_docs"),
+                self._get_export_format() is not None,
             ]
         )
 
@@ -64,6 +65,13 @@ class ReadableRuntimePlugin:
             self.i18n,
             preserve_case_language=requested_lang == "auto",
         )
+
+    def _get_export_format(self) -> str | None:
+        """Return the format requested through --export, if available."""
+        try:
+            return self.config.getoption("readable_export")
+        except ValueError:
+            return None
 
     def _line_style(self, line: str) -> dict[str, bool]:
         """Return pytest terminal markup flags for a rendered summary line."""
@@ -104,12 +112,13 @@ class ReadableRuntimePlugin:
 
     def _export_if_requested(self, terminal_reporter):
         """Export readable docs after summary if the flag is enabled."""
-        if not self.config.getoption("readable_docs"):
+        export_format = self._get_export_format()
+        if not self.config.getoption("readable_docs") and not export_format:
             return
         if self.suite is None or self.i18n is None:
             return
 
-        out_format = self.config.getoption("readable_format")
+        out_format = export_format or self.config.getoption("readable_format")
         output = self.config.getoption("readable_out")
         if output:
             out_path = Path(output)
@@ -224,6 +233,15 @@ def pytest_addoption(parser):
         "--readable-include-steps",
         action="store_true",
         help="Include documented steps in readable output",
+    )
+    group.addoption(
+        "--export",
+        dest="readable_export",
+        action="store",
+        metavar="FORMAT",
+        choices=["markdown", "csv"],
+        default=None,
+        help="Shortcut for --readable-docs and --readable-format=FORMAT",
     )
 
 

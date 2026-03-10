@@ -51,3 +51,7 @@ include = ["pytest_readable*"]
 
 [tool.setuptools.package-data]
 pytest_readable = ["locale/*/LC_MESSAGES/*.po", "locale/*/LC_MESSAGES/*.mo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["temp", "build", "dist", ".git", ".pytest_cache", ".mypy_cache"]

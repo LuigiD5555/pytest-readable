@@ -61,6 +61,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="Language used by readable output",
     )
+    parser.add_argument(
+        "--export",
+        choices=["markdown", "csv"],
+        default="",
+        help="Request readable docs export in the given format",
+    )
     return parser
 
 
@@ -77,6 +83,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if not any(part.startswith("--readable-lang") for part in pytest_args) and args.lang != "auto":
         pytest_args.append(f"--readable-lang={args.lang}")
+
+    if args.export:
+        pytest_args.append(f"--export={args.export}")
 
     if not any(part.startswith("-q") or part in {"--quiet", "-v", "--verbose"} for part in pytest_args):
         pytest_args.extend(["-q", "--no-header"])

@@ -130,11 +130,13 @@ Enable readable summaries:
 pytest --readable
 ```
 
-Export documentation:
+Export documentation (Markdown):
 
 ```bash
-pytest --readable-export=markdown
+pytest --readable --export=markdown
 ```
+
+The `--export` flag is a shortcut for `--readable-docs --readable-format=FORMAT`, so you can also run `pytest --readable --export=csv` or add `--readable-out=docs/tests-readable.md` to set a different path.
 
 ---
 
@@ -159,6 +161,14 @@ This is equivalent to running:
 ```bash
 pytest --readable
 ```
+
+To export Markdown documentation for a specific run you can append the new `--export` flag:
+
+```bash
+readable pytest tests/ --export=markdown
+```
+
+That expands to `pytest --readable --export=markdown` under the hood.
 
 The CLI wrapper exists mainly as a **mnemonic shortcut**, making it easier to remember and invoke readable test summaries.
 

@@ -26,6 +26,7 @@ def test_help_exposes_readable_options(pytester):
             "*--readable*",
             "*--readable-tree*",
             "*--readable-docs*",
+            "*--export*",
             "*--readable-out=PATH*",
             "*--readable-format={markdown,csv}*",
             "*--readable-lang={auto,en,es}*",
@@ -188,26 +189,42 @@ def test_plugin_exports_markdown_includes_expected_content(pytester):
     assert "- status: `collected`" in rendered
 
 
-def _export_markdown_docs(pytester):
-    pytester.makepyfile(
-        test_docs="""
-        def test_documented_case():
-            assert True
-        """
-    )
-    out_file = pytester.path / "docs" / "tests-readable.md"
+@readable(
+    intent="Si --export=markdown habilita la exportación directamente desde el flag nuevo.",
+    steps=[
+        "Crea un test temporal",
+        "Ejecuta pytest collect-only con --readable y --export=markdown",
+        "Confirma que el archivo Markdown se crea y el log reporta la exportación",
+    ],
+    criteria=[
+        "La exportación ocurre usando solo el flag --export",
+    ],
+)
+def test_plugin_exports_markdown_with_export_flag(pytester):
+    result, out_file, _ = _run_export_docs(pytester, "markdown", via_export_flag=True)
+    assert out_file.exists()
+    result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.md*"])
 
-    result = pytester.runpytest(
-        "--collect-only",
-        "--readable",
-        "--readable-lang=en",
-        "--readable-docs",
-        "--readable-format=markdown",
-        f"--readable-out={out_file}",
-        "-q",
-    )
-    rendered = out_file.read_text(encoding="utf-8") if out_file.exists() else ""
-    return result, out_file, rendered
+
+@readable(
+    intent="Si --export=csv crea exportación CSV idéntica a --readable-docs.",
+    steps=[
+        "Crea un test temporal",
+        "Ejecuta pytest collect-only con --readable y --export=csv",
+        "Confirma que el archivo CSV se genera y se reporta la exportación",
+    ],
+    criteria=[
+        "La exportación CSV funciona cuando se usa el flag --export",
+    ],
+)
+def test_plugin_exports_csv_with_export_flag(pytester):
+    result, out_file, _ = _run_export_docs(pytester, "csv", via_export_flag=True)
+    assert out_file.exists()
+    result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.csv*"])
+
+
+def _export_markdown_docs(pytester):
+    return _run_export_docs(pytester, "markdown")
 
 
 @readable(
@@ -222,7 +239,7 @@ def _export_markdown_docs(pytester):
     ],
 )
 def test_plugin_exports_csv_creates_output_file(pytester):
-    out_file, _ = _export_csv_docs(pytester)
+    _, out_file, _ = _export_csv_docs(pytester)
     assert out_file.exists()
 
 
@@ -238,7 +255,7 @@ def test_plugin_exports_csv_creates_output_file(pytester):
     ],
 )
 def test_plugin_exports_csv_includes_expected_columns(pytester):
-    out_file, _ = _export_csv_docs(pytester)
+    _, out_file, _ = _export_csv_docs(pytester)
     assert out_file.exists()
     csv_lines = out_file.read_text(encoding="utf-8").splitlines()
     reader = csv.reader(csv_lines)
@@ -252,25 +269,34 @@ def test_plugin_exports_csv_includes_expected_columns(pytester):
 
 
 def _export_csv_docs(pytester):
+    return _run_export_docs(pytester, "csv")
+
+
+def _run_export_docs(pytester, format_: str, *, via_export_flag: bool = False):
     pytester.makepyfile(
         test_docs="""
         def test_documented_case():
             assert True
         """
     )
-    out_file = pytester.path / "docs" / "tests-readable.csv"
+    extension = "md" if format_ == "markdown" else "csv"
+    out_file = pytester.path / "docs" / f"tests-readable.{extension}"
 
-    result = pytester.runpytest(
+    args = [
         "--collect-only",
         "--readable",
         "--readable-lang=en",
-        "--readable-docs",
-        "--readable-format=csv",
-        f"--readable-out={out_file}",
-        "-q",
-    )
+    ]
+    if via_export_flag:
+        args.append(f"--export={format_}")
+    else:
+        args.extend(["--readable-docs", f"--readable-format={format_}"])
+    args.append(f"--readable-out={out_file}")
+    args.append("-q")
 
-    return out_file, result
+    result = pytester.runpytest(*args)
+    rendered = out_file.read_text(encoding="utf-8") if out_file.exists() else ""
+    return result, out_file, rendered
 
 
 @readable(
