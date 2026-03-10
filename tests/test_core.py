@@ -8,6 +8,7 @@ from pytest_readable.core.exporters import render_csv
 from pytest_readable.core.models import ReadableSuite, ReadableTestCase
 from pytest_readable.core.parser import (
     detect_language_from_decorators,
+    find_tests_without_readable,
     parse_decorated_spec_file,
 )
 from pytest_readable.core.renderer import (
@@ -748,6 +749,93 @@ def test_spanish_tokens():
     )
 
     assert detect_language_from_decorators(tmp_path) == "es"
+
+
+@readable(
+    intent="Ensures missing readable metadata is detected for module and class tests.",
+    steps=[
+        "Create test files with decorated and undecorated test functions",
+        "Run find_tests_without_readable on the temporary directory",
+        "Verify only undecorated tests are reported",
+    ],
+    criteria=[
+        "The result contains exactly test functions without the readable decorator",
+    ],
+)
+def test_find_tests_without_readable_reports_missing_functions(tmp_path):
+    test_file = tmp_path / "test_sample.py"
+    test_file.write_text(
+        """from pytest_readable.decorators import readable
+
+@readable(
+    intent="Documented",
+    steps=["Step one"],
+)
+def test_documented():
+    pass
+
+def test_missing_case():
+    pass
+""",
+        encoding="utf-8",
+    )
+    class_file = tmp_path / "test_class_case.py"
+    class_file.write_text(
+        """from pytest_readable.decorators import readable
+
+class TestFlow:
+    @readable(
+        intent="Documented method",
+        steps=["Step one"],
+    )
+    def test_documented_method(self):
+        pass
+
+    def test_missing_method(self):
+        pass
+""",
+        encoding="utf-8",
+    )
+
+    missing = find_tests_without_readable(tmp_path)
+    normalized = [(str(path.relative_to(tmp_path)), name) for path, name in missing]
+    assert normalized == [
+        ("test_class_case.py", "TestFlow.test_missing_method"),
+        ("test_sample.py", "test_missing_case"),
+    ]
+
+
+@readable(
+    intent="Ensures CLI missing-readable mode reports missing tests and skips pytest execution.",
+    steps=[
+        "Create a temporary test without @readable",
+        "Intercept subprocess.run to prevent real pytest execution",
+        "Run cli.main with --find-missing and validate output",
+    ],
+    criteria=[
+        "CLI returns failure and lists missing tests without calling subprocess.run",
+    ],
+)
+def test_cli_find_missing_skips_pytest_execution(monkeypatch, tmp_path, capsys):
+    test_file = tmp_path / "test_plain.py"
+    test_file.write_text(
+        """
+def test_without_readable():
+    pass
+""",
+        encoding="utf-8",
+    )
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("subprocess.run should not be called in --find-missing mode")
+
+    monkeypatch.setattr(cli.subprocess, "run", fail_if_called)
+    code = cli.main(["--find-missing", f"--tests-root={tmp_path}"])
+    rendered = capsys.readouterr().out
+
+    assert code == 1
+    assert "Functions missing @readable:" in rendered
+    assert "test_plain.py:test_without_readable" in rendered
 
 
 @readable(

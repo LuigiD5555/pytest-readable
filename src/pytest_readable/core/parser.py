@@ -124,6 +124,46 @@ def _decorator_name(decorator: ast.expr) -> str:
     return ""
 
 
+def _is_test_function(node: ast.AST) -> bool:
+    return isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test")
+
+
+def _has_readable_decorator(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    for decorator in node.decorator_list:
+        if _decorator_name(decorator) == "readable":
+            return True
+    return False
+
+
+def _iter_test_functions(tree: ast.AST):
+    for node in getattr(tree, "body", []):
+        if _is_test_function(node):
+            yield "", node
+            continue
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if _is_test_function(child):
+                    yield node.name, child
+
+
+def find_tests_without_readable(root: Path) -> list[tuple[Path, str]]:
+    """List collected-style test functions that do not use `@readable(...)`."""
+    missing: list[tuple[Path, str]] = []
+    for test_file in find_test_files(root):
+        try:
+            tree = ast.parse(test_file.read_text(encoding="utf-8"), filename=str(test_file))
+        except (UnicodeDecodeError, SyntaxError):
+            continue
+
+        for class_name, node in _iter_test_functions(tree):
+            if _has_readable_decorator(node):
+                continue
+            function_name = f"{class_name}.{node.name}" if class_name else node.name
+            missing.append((test_file, function_name))
+
+    return missing
+
+
 def _literal(node: ast.expr):
     """Safely evaluate an AST literal, returning None on failure."""
     try:

@@ -8,7 +8,9 @@ import argparse
 import re
 import subprocess
 import sys
+from pathlib import Path
 
+from pytest_readable.core.parser import find_tests_without_readable
 from pytest_readable.language_registry import supported_languages
 
 
@@ -67,12 +69,32 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Request readable docs export in the given format",
     )
+    parser.add_argument(
+        "--find-missing",
+        action="store_true",
+        help="List tests that do not include @readable(...) and exit",
+    )
+    parser.add_argument(
+        "--tests-root",
+        default="tests",
+        help="Root directory used by --find-missing (default: tests)",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     """Entrypoint invoked by the `readable` script; forwards to pytest."""
     args, passthrough = build_parser().parse_known_args(argv)
+
+    if args.find_missing:
+        missing = find_tests_without_readable(Path(args.tests_root))
+        if missing:
+            print("Functions missing @readable:")
+            for path, name in missing:
+                print(f"{path}:{name}")
+            return 1
+        print("All test functions already have @readable")
+        return 0
 
     pytest_args = [*args.pytest_args, *passthrough]
     while pytest_args and pytest_args[0] in {"pytest", "py.test"}:

@@ -178,6 +178,18 @@ You can inspect available CLI options with:
 readable --help
 ```
 
+To quickly audit missing metadata and speed up migrations:
+
+```bash
+readable --find-missing
+```
+
+Optional custom test root:
+
+```bash
+readable --find-missing --tests-root=tests
+```
+
 ---
 
 # Using the `@readable` decorator
