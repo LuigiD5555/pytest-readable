@@ -26,10 +26,10 @@ def test_help_exposes_readable_options(pytester):
             "*--readable*",
             "*--readable-tree*",
             "*--readable-docs*",
-            "*--export*",
             "*--readable-out=PATH*",
             "*--readable-format={markdown,csv}*",
             "*--readable-lang={auto,en,es}*",
+            "*--export*",
         ]
     )
 
