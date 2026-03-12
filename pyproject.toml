@@ -10,14 +10,14 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
-  { name = "José Luis López López Prieto" }
+  { name = "LuigiD5555" }
 ]
 keywords = ["pytest", "testing", "documentation", "tdd", "plugin", "specifications"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Framework :: Pytest",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
+  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -31,9 +31,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TU-USUARIO/pytest-readable"
-Repository = "https://github.com/TU-USUARIO/pytest-readable"
-Issues = "https://github.com/TU-USUARIO/pytest-readable/issues"
+Homepage = "https://github.com/LuigiD5555/pytest-readable"
+Repository = "https://github.com/LuigiD5555/pytest-readable"
+Issues = "https://github.com/LuigiD5555/pytest-readable/issues"
 
 [project.entry-points.pytest11]
 readable = "pytest_readable.plugin"

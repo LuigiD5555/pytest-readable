@@ -1,5 +1,5 @@
-# Copyright 2026 José Luis López López Prieto and contributors
-# Licensed under the Apache License, Version 2.0
+# Copyright 2026 LuigiD5555
+# Licensed under the MIT License
 # See LICENSE file for details.
 
 """pytest_readable: native pytest plugin for readable test documentation."""
