@@ -96,7 +96,7 @@ def detect_language_from_decorators(root: Path) -> str | None:
                 if keyword.arg.endswith("_en"):
                     scores["en"] += 3
                     continue
-                if keyword.arg not in {"intent", "title", "steps", "criteria"}:
+                if keyword.arg not in {"intention", "title", "steps", "criteria"}:
                     continue
 
                 if isinstance(value, list):
@@ -256,7 +256,7 @@ def _parse_decorated_test(
 
     default_name = f"{class_name}.{node.name}" if class_name else node.name
     name = _pick_text(readable_call, "title", language) or default_name.replace("_", " ")
-    what = _pick_text(readable_call, "intent", language)
+    what = _pick_text(readable_call, "intention", language)
     steps = _pick_steps(readable_call, language)
     criteria = _pick_criteria(readable_call, language)
 
@@ -307,7 +307,7 @@ def _infer_metadata_language(metadata: dict[str, Any], default_language: str) ->
     """Infer language preference for one decorated test metadata payload."""
     scores = {"en": 0, "es": 0}
 
-    for key in ("title", "intent", "steps", "criteria"):
+    for key in ("title", "intention", "steps", "criteria"):
         en_chunks = _text_chunks(metadata.get(f"{key}_en"))
         es_chunks = _text_chunks(metadata.get(f"{key}_es"))
         if en_chunks:
@@ -372,11 +372,11 @@ def build_suite_from_items(
         if preserve_case_language:
             case_language = _infer_metadata_language(metadata, i18n.language)
 
-        intent = _pick_value(metadata, "intent", case_language)
-        display_name = intent or _pick_value(metadata, "title", case_language) or _normalize_function_name(
+        intention = _pick_value(metadata, "intention", case_language)
+        display_name = intention or _pick_value(metadata, "title", case_language) or _normalize_function_name(
             function_name
         )
-        what = intent
+        what = intention
         steps = _pick_steps_from_metadata(metadata, case_language)
         criteria = _pick_criteria_from_metadata(metadata, case_language)
 

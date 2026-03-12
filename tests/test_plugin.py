@@ -8,7 +8,7 @@ from pytest_readable.plugin import ReadableRuntimePlugin
 
 
 @readable(
-    intent="Si el plugin registra sus flags y aparecen en pytest help.",
+    intention="Si el plugin registra sus flags y aparecen en pytest help.",
     steps=[
         "Ejecuta pytest con help",
         "Busca flags readable en la salida",
@@ -35,7 +35,7 @@ def test_help_exposes_readable_options(pytester):
 
 
 @readable(
-    intent="Si readable muestra el encabezado y total en el resumen integrado.",
+    intention="Si readable muestra el encabezado y total en el resumen integrado.",
     steps=[
         "Crea un test simple en un proyecto temporal",
         "Ejecuta pytest con readable y readable-lang=en",
@@ -51,7 +51,7 @@ def test_readable_prints_summary_header_and_total(pytester):
 
 
 @readable(
-    intent="Si readable mantiene outcomes de pytest al ejecutar una prueba aprobada.",
+    intention="Si readable mantiene outcomes de pytest al ejecutar una prueba aprobada.",
     steps=[
         "Crea un test simple en un proyecto temporal",
         "Ejecuta pytest con readable y readable-lang=en",
@@ -78,7 +78,7 @@ def _run_readable_summary(pytester):
 
 
 @readable(
-    intent="Si collect-only con readable-tree imprime jerarquia por modulo y clase.",
+    intention="Si collect-only con readable-tree imprime jerarquia por modulo y clase.",
     steps=[
         "Crea un test dentro de una clase",
         "Ejecuta pytest en collect-only con readable-tree",
@@ -103,14 +103,14 @@ def test_collect_only_readable_tree_prints_hierarchy(pytester):
 
 
 @readable(
-    intent="Si readable con intent y pasos multilinea aparece en la salida detallada.",
+    intention="Si readable con intention y pasos multilinea aparece en la salida detallada.",
     steps=[
-        "Crea un test temporal con readable intent y steps multilinea",
+        "Crea un test temporal con readable intention y steps multilinea",
         "Ejecuta pytest en collect-only con readable include-steps",
         "Verifica encabezado, detalle e impresion de pasos",
     ],
     criteria=[
-        "La salida incluye intent, pasos y criterios documentados del caso temporal",
+        "La salida incluye intention, pasos y criterios documentados del caso temporal",
     ],
 )
 def test_readable_decorator_with_multiline_steps_is_rendered(pytester):
@@ -120,7 +120,7 @@ def test_readable_decorator_with_multiline_steps_is_rendered(pytester):
 
         @readable(
             title="test_sample.py",
-            intent="Parses english fields",
+            intention="Parses english fields",
             steps="""
         1. Read the file
         2. Extract the fields
@@ -155,7 +155,7 @@ def test_readable_decorator_with_multiline_steps_is_rendered(pytester):
 
 
 @readable(
-    intent="Si el plugin crea el archivo markdown cuando se exporta documentación.",
+    intention="Si el plugin crea el archivo markdown cuando se exporta documentación.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest en collect-only con formato markdown y ruta de salida",
@@ -172,7 +172,7 @@ def test_plugin_exports_markdown_creates_output_file(pytester):
 
 
 @readable(
-    intent="Si el markdown exportado contiene encabezado y detalle esperado del caso.",
+    intention="Si el markdown exportado contiene encabezado y detalle esperado del caso.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest en collect-only con formato markdown y ruta de salida",
@@ -190,7 +190,7 @@ def test_plugin_exports_markdown_includes_expected_content(pytester):
 
 
 @readable(
-    intent="Si --export=markdown habilita la exportación directamente desde el flag nuevo.",
+    intention="Si --export=markdown habilita la exportación directamente desde el flag nuevo.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest collect-only con --readable y --export=markdown",
@@ -207,7 +207,7 @@ def test_plugin_exports_markdown_with_export_flag(pytester):
 
 
 @readable(
-    intent="Si --export=csv crea exportación CSV idéntica a --readable-docs.",
+    intention="Si --export=csv crea exportación CSV idéntica a --readable-docs.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest collect-only con --readable y --export=csv",
@@ -224,7 +224,7 @@ def test_plugin_exports_csv_with_export_flag(pytester):
 
 
 @readable(
-    intent="Si la exportación se ejecuta aunque exista una prueba fallida.",
+    intention="Si la exportación se ejecuta aunque exista una prueba fallida.",
     steps=[
         "Crea un test temporal que falla",
         "Ejecuta pytest con --readable y --export=markdown",
@@ -246,7 +246,7 @@ def _export_markdown_docs(pytester):
 
 
 @readable(
-    intent="Si el plugin crea el archivo CSV en la ruta indicada.",
+    intention="Si el plugin crea el archivo CSV en la ruta indicada.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest en collect-only con formato csv y ruta de salida",
@@ -262,7 +262,7 @@ def test_plugin_exports_csv_creates_output_file(pytester):
 
 
 @readable(
-    intent="Si el CSV exportado incluye encabezados y columnas esperadas para el caso.",
+    intention="Si el CSV exportado incluye encabezados y columnas esperadas para el caso.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest en collect-only con formato csv y ruta de salida",
@@ -338,7 +338,7 @@ def _run_export_docs_with_failure(pytester, format_: str):
 
 
 @readable(
-    intent_en="Ensures --readable-lang=es renders the summary header in Spanish.",
+    intention_en="Ensures --readable-lang=es renders the summary header in Spanish.",
     steps_en=[
         "Create a temporary test",
         "Run pytest collect-only with readable output and Spanish language",
@@ -368,7 +368,7 @@ def test_plugin_honors_readable_lang_es(pytester):
 
 
 @readable(
-    intent="Ensures --readable-lang=en keeps the readable summary header in English.",
+    intention="Ensures --readable-lang=en keeps the readable summary header in English.",
     steps=[
         "Crea un test temporal",
         "Ejecuta pytest collect-only con readable y lenguaje inglés",
@@ -398,7 +398,7 @@ def test_plugin_honors_readable_lang_en(pytester):
 
 
 @readable(
-    intent_es="Verifica que --readable-lang=auto prioriza metadata del decorator sobre el entorno forzado.",
+    intention_es="Verifica que --readable-lang=auto prioriza metadata del decorator sobre el entorno forzado.",
     steps_es=[
         "Fuerza las variables de entorno a inglés",
         "Crea un test con metadata del decorator en español",
@@ -419,7 +419,7 @@ def test_plugin_auto_lang_detects_from_decorators_es(pytester, monkeypatch):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent="Si detecta idioma español desde decorators",
+            intention="Si detecta idioma español desde decorators",
             steps=["Define metadata en español", "Renderiza en modo auto"],
         )
         def test_detects_es():
@@ -432,7 +432,7 @@ def test_plugin_auto_lang_detects_from_decorators_es(pytester, monkeypatch):
 
 
 @readable(
-    intent_en="Ensures auto language picks decorator metadata instead of forced environment.",
+    intention_en="Ensures auto language picks decorator metadata instead of forced environment.",
     steps_en=[
         "Set environment variables to Spanish",
         "Create a test whose decorator metadata is written in English",
@@ -453,7 +453,7 @@ def test_plugin_auto_lang_detects_from_decorators_en(pytester, monkeypatch):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent="Validates English metadata despite Spanish environment",
+            intention="Validates English metadata despite Spanish environment",
             steps=["Create English metadata"],
             criteria=["Reports English header"],
         )
@@ -467,7 +467,7 @@ def test_plugin_auto_lang_detects_from_decorators_en(pytester, monkeypatch):
 
 
 @readable(
-    intent="Si un test no tiene metadata readable, el arbol usa el nombre normalizado de la funcion.",
+    intention="Si un test no tiene metadata readable, el arbol usa el nombre normalizado de la funcion.",
     steps=[
         "Crea un test sin metadata decorada",
         "Ejecuta collect-only con arbol readable",
@@ -496,7 +496,7 @@ def test_plugin_tree_without_readable_uses_function_name(pytester):
 
 
 @readable(
-    intent="Si el resumen detallado en auto conserva labels y estado del caso en español.",
+    intention="Si el resumen detallado en auto conserva labels y estado del caso en español.",
     steps=[
         "Crea dos pruebas temporales con readable, una en español y otra en ingles",
         "Ejecuta pytest collect-only con readable-lang=auto e include-steps",
@@ -515,7 +515,7 @@ def test_plugin_applies_case_language_strategy_in_detailed_list_es(pytester):
 
 
 @readable(
-    intent_en="Ensures auto detailed summary keeps labels and status for the English case.",
+    intention_en="Ensures auto detailed summary keeps labels and status for the English case.",
     steps_en=[
         "Create two temporary tests with readable metadata in Spanish and English",
         "Run pytest collect-only with readable-lang=auto and include-steps",
@@ -540,14 +540,14 @@ def _run_case_language_strategy(pytester):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent_es="Valida comportamiento en español",
+            intention_es="Valida comportamiento en español",
             steps_es=["Ejecuta caso español"],
         )
         def test_case_es():
             assert True
 
         @readable(
-            intent_en="Validates behavior in English",
+            intention_en="Validates behavior in English",
             steps_en=["Run English case"],
         )
         def test_case_en():
@@ -567,7 +567,7 @@ def _run_case_language_strategy(pytester):
 
 
 @readable(
-    intent="Si readable-lang=en fuerza etiquetas y metadata en inglés aunque el decorator tenga contenido en español.",
+    intention="Si readable-lang=en fuerza etiquetas y metadata en inglés aunque el decorator tenga contenido en español.",
     steps=[
         "Crea un test temporal con metadata readable en español",
         "Ejecuta pytest collect-only con readable-lang=en e include-steps",
@@ -583,8 +583,8 @@ def test_plugin_forced_lang_overrides_case_detection(pytester):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent_es="Valida comportamiento en español",
-            intent_en="Validates behavior in English",
+            intention_es="Valida comportamiento en español",
+            intention_en="Validates behavior in English",
             steps_es=["Ejecuta caso español"],
             steps_en=["Run English case"],
             criteria_es=["Retorna estado esperado"],
@@ -613,7 +613,7 @@ def test_plugin_forced_lang_overrides_case_detection(pytester):
 
 
 @readable(
-    intent="Si readable-lang=es fuerza etiquetas y metadata en español aunque el decorator tenga contenido en inglés.",
+    intention="Si readable-lang=es fuerza etiquetas y metadata en español aunque el decorator tenga contenido en inglés.",
     steps=[
         "Crea un test temporal con metadata readable en inglés",
         "Ejecuta pytest collect-only con readable-lang=es e include-steps",
@@ -629,8 +629,8 @@ def test_plugin_forced_lang_overrides_case_detection_es(pytester):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent_es="Valida comportamiento en español",
-            intent_en="Validates behavior in English",
+            intention_es="Valida comportamiento en español",
+            intention_en="Validates behavior in English",
             steps_es=["Ejecuta caso español"],
             steps_en=["Run English case"],
             criteria_es=["Retorna estado esperado"],
@@ -659,7 +659,7 @@ def test_plugin_forced_lang_overrides_case_detection_es(pytester):
 
 
 @readable(
-    intent="Si el plugin aplica color amarillo a lineas de intencion en ambos idiomas.",
+    intention="Si el plugin aplica color amarillo a lineas de intencion en ambos idiomas.",
     steps=[
         "Crea instancia del plugin runtime",
         "Evalua estilo para linea en español y linea en ingles",
@@ -669,7 +669,7 @@ def test_plugin_forced_lang_overrides_case_detection_es(pytester):
         "Si \"Qué prueba\" está pintada de color amarillo en salida ANSI",
     ],
 )
-def test_plugin_styles_intent_lines_in_yellow():
+def test_plugin_styles_intention_lines_in_yellow():
     plugin = ReadableRuntimePlugin(config=None)
 
     assert plugin._line_style("    Qué prueba: valida algo") == {"yellow": True}
@@ -679,7 +679,7 @@ def test_plugin_styles_intent_lines_in_yellow():
 
 
 @readable(
-    intent="Si el reporte de plugin pinta en azul el encabezado de criterios en salida ANSI.",
+    intention="Si el reporte de plugin pinta en azul el encabezado de criterios en salida ANSI.",
     steps=[
         "Crea un test temporal con metadata de criterios",
         "Ejecuta pytest collect-only con readable y color forzado",
@@ -695,7 +695,7 @@ def test_plugin_reports_criteria_header_in_blue(pytester):
         from pytest_readable.decorators import readable
 
         @readable(
-            intent="Valida color de criterios",
+            intention="Valida color de criterios",
             steps=["Ejecuta reporte legible"],
             criteria=["Renderiza encabezado azul"],
         )

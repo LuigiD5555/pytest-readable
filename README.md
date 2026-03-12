@@ -21,7 +21,7 @@ from pytest_readable import readable
 
 
 @readable(
-    intent="User login succeeds with valid credentials",
+    intention="User login succeeds with valid credentials",
     steps=[
         "Create a user",
         "Attempt login with the correct password",
@@ -113,7 +113,7 @@ This keeps the plugin:
 
 This project focuses on:
 
-- readable test intent
+- readable test intention
 - explicit steps
 - explicit pass conditions
 - pytest-aware rendering
@@ -157,7 +157,7 @@ from pytest_readable import readable
 
 
 @readable(
-    intent="Search returns matching results",
+    intention="Search returns matching results",
     steps=[
         "User enters a search query",
         "The system queries the search index",
@@ -175,7 +175,7 @@ The preferred metadata shape is:
 
 ```python
 @readable(
-    intent="What the test validates",
+    intention="What the test validates",
     steps=["Action performed"],
     criteria=["Expected observable outcome"],
 )

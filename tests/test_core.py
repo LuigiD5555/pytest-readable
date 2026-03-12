@@ -27,7 +27,7 @@ from pytest_readable.language_registry import (
 
 
 @readable(
-    intent="Si la exportacion markdown incluye titulo y marca temporal en español.",
+    intention="Si la exportacion markdown incluye titulo y marca temporal en español.",
     steps=[
         "Construye una suite en memoria con un caso documentado",
         "Ejecuta render_markdown con idioma español",
@@ -45,7 +45,7 @@ def test_markdown_export_localizes_title_and_timestamp():
 
 
 @readable(
-    intent="Si la exportacion markdown renderiza labels de seccion en español.",
+    intention="Si la exportacion markdown renderiza labels de seccion en español.",
     steps=[
         "Construye una suite en memoria con un caso documentado",
         "Ejecuta render_markdown con idioma español",
@@ -82,7 +82,7 @@ def _build_spanish_documented_suite() -> ReadableSuite:
 
 
 @readable(
-    intent="Si la exportacion csv genera encabezados traducidos al idioma seleccionado.",
+    intention="Si la exportacion csv genera encabezados traducidos al idioma seleccionado.",
     steps=[
         "Construye una suite en memoria",
         "Ejecuta render_csv con idioma español",
@@ -100,7 +100,7 @@ def test_csv_export_localizes_headers():
 
 
 @readable(
-    intent="Si la resolucion de idioma usa el argumento explicito por encima de variables de entorno.",
+    intention="Si la resolucion de idioma usa el argumento explicito por encima de variables de entorno.",
     steps=[
         "Define PYTEST_READABLE_LANG con valor español",
         "Llama resolve_language con argumento en",
@@ -117,7 +117,7 @@ def test_resolve_language_prefers_explicit_argument(monkeypatch):
 
 
 @readable(
-    intent="Si en modo auto se usa el idioma del entorno.",
+    intention="Si en modo auto se usa el idioma del entorno.",
     steps=[
         "Define LANG con una localidad en español",
         "Llama resolve_language en auto",
@@ -136,7 +136,7 @@ def test_resolve_language_uses_environment_when_auto(monkeypatch):
 
 
 @readable(
-    intent="Si la resolucion de idioma vuelve a ingles cuando no hay argumento ni variables de entorno.",
+    intention="Si la resolucion de idioma vuelve a ingles cuando no hay argumento ni variables de entorno.",
     steps=[
         "Limpia PYTEST_READABLE_LANG, LC_ALL y LANG",
         "Llama resolve_language sin argumentos",
@@ -155,7 +155,7 @@ def test_resolve_language_defaults_to_english(monkeypatch):
 
 
 @readable(
-    intent="Si get_i18n obtiene traducciones reales desde los catalogos compilados.",
+    intention="Si get_i18n obtiene traducciones reales desde los catalogos compilados.",
     steps=[
         "Solicita instancia i18n en español",
         "Consulta una clave traducible conocida",
@@ -172,7 +172,7 @@ def test_get_i18n_uses_gettext_catalogs():
 
 
 @readable(
-    intent="Si language_pack registra un idioma heredando campos no sobreescritos del base.",
+    intention="Si language_pack registra un idioma heredando campos no sobreescritos del base.",
     steps=[
         "Registra un idioma temporal usando language_pack con base en ingles",
         "Consulta el pack registrado",
@@ -189,7 +189,7 @@ def test_language_pack_decorator_inherits_base_defaults():
 
 
 @readable(
-    intent="Si language_pack autogenera labels aceptados desde what_label y steps_label.",
+    intention="Si language_pack autogenera labels aceptados desde what_label y steps_label.",
     steps=[
         "Registra un idioma temporal usando language_pack con base en ingles",
         "Consulta el pack registrado",
@@ -239,7 +239,7 @@ def _register_portuguese_test_pack():
 
 
 @readable(
-    intent="Si la compilacion de archivos po genera un archivo .mo valido.",
+    intention="Si la compilacion de archivos po genera un archivo .mo valido.",
     steps=[
         "Crea un po temporal con una traduccion simple",
         "Ejecuta compile_po_file",
@@ -255,7 +255,7 @@ def test_compile_po_file_generates_mo_file(tmp_path):
 
 
 @readable(
-    intent="Si GNUTranslations puede cargar la traducción compilada desde el archivo .mo.",
+    intention="Si GNUTranslations puede cargar la traducción compilada desde el archivo .mo.",
     steps=[
         "Crea un po temporal con una traduccion simple",
         "Ejecuta compile_po_file y abre el mo con GNUTranslations",
@@ -287,7 +287,7 @@ msgstr "Descripcion de prueba"
 
 
 @readable(
-    intent="Si parse_pytest_output extrae conteos y duración del resumen de pytest.",
+    intention="Si parse_pytest_output extrae conteos y duración del resumen de pytest.",
     steps=[
         "Prepara una salida de pytest de ejemplo con casos PASSED, FAILED y SKIPPED",
         "Ejecuta parse_pytest_output",
@@ -307,7 +307,7 @@ def test_parse_pytest_output_extracts_counts_and_duration():
 
 
 @readable(
-    intent="Si parse_pytest_output identifica el nodeid fallido en los casos parseados.",
+    intention="Si parse_pytest_output identifica el nodeid fallido en los casos parseados.",
     steps=[
         "Prepara una salida de pytest de ejemplo con casos PASSED, FAILED y SKIPPED",
         "Ejecuta parse_pytest_output",
@@ -338,7 +338,7 @@ tests/test_i18n.py::test_skip SKIPPED [100%]
 
 
 @readable(
-    intent="Si render_natural_pytest_summary muestra encabezado y conteos en español.",
+    intention="Si render_natural_pytest_summary muestra encabezado y conteos en español.",
     steps=[
         "Construye un reporte parseado en memoria con un test pasado y uno fallido",
         "Ejecuta render_natural_pytest_summary con idioma es",
@@ -356,7 +356,7 @@ def test_render_natural_pytest_summary_localizes_header_and_counts():
 
 
 @readable(
-    intent="Si render_natural_pytest_summary incluye el nodeid fallido en el detalle final.",
+    intention="Si render_natural_pytest_summary incluye el nodeid fallido en el detalle final.",
     steps=[
         "Construye un reporte parseado en memoria con un test pasado y uno fallido",
         "Ejecuta render_natural_pytest_summary con idioma es",
@@ -385,7 +385,7 @@ def _render_sample_natural_summary_es():
 
 
 @readable(
-    intent="Si render_summary_text en español usa etiquetas de detalle localizadas.",
+    intention="Si render_summary_text en español usa etiquetas de detalle localizadas.",
     steps=[
         "Construye una suite en memoria con un caso aprobado, descripcion y pasos",
         "Ejecuta render_summary_text con idioma español e inclusion de pasos",
@@ -407,7 +407,7 @@ def test_render_summary_text_spanish_uses_localized_labels():
 
 
 @readable(
-    intent="Si render_summary_text en español muestra pasos, criterios y resumen final del caso.",
+    intention="Si render_summary_text en español muestra pasos, criterios y resumen final del caso.",
     steps=[
         "Construye una suite en memoria con un caso aprobado, descripcion y pasos",
         "Ejecuta render_summary_text con idioma español e inclusion de pasos",
@@ -424,7 +424,7 @@ def test_render_summary_text_spanish_renders_steps_and_criteria():
 
 
 @readable(
-    intent="Si render_summary_text conserva labels por idioma para casos en español e inglés.",
+    intention="Si render_summary_text conserva labels por idioma para casos en español e inglés.",
     steps=[
         "Construye una suite con un caso en español y otro en ingles",
         "Ejecuta render_summary_text en modo detallado",
@@ -446,7 +446,7 @@ def test_render_summary_text_uses_case_language_labels():
 
 
 @readable(
-    intent="Si render_summary_text muestra placeholders localizados cuando faltan criterios.",
+    intention="Si render_summary_text muestra placeholders localizados cuando faltan criterios.",
     steps=[
         "Construye una suite con un caso en español y otro en ingles sin criterios",
         "Ejecuta render_summary_text en modo detallado",
@@ -465,9 +465,9 @@ def test_render_summary_text_uses_localized_missing_criteria_placeholders():
 
 
 @readable(
-    intent="Si parse_decorated_spec_file selecciona metadata en español para el idioma solicitado.",
+    intention="Si parse_decorated_spec_file selecciona metadata en español para el idioma solicitado.",
     steps=[
-        "Crea un archivo temporal con readable y campos title intent steps en ingles y español",
+        "Crea un archivo temporal con readable y campos title intention steps en ingles y español",
         "Ejecuta parse_decorated_spec_file con idioma español",
         "Verifica que el resultado use nombre e intención en español",
     ],
@@ -483,7 +483,7 @@ def test_parse_decorated_spec_file_selects_spanish_metadata(tmp_path):
 
 
 @readable(
-    intent="Si parse_decorated_spec_file preserva pasos y criterios i18n como listas.",
+    intention="Si parse_decorated_spec_file preserva pasos y criterios i18n como listas.",
     steps=[
         "Crea un archivo temporal con readable y campos i18n para steps y criteria",
         "Ejecuta parse_decorated_spec_file con idioma español",
@@ -560,8 +560,8 @@ def _parse_i18n_decorated_spec(tmp_path: Path) -> dict:
 @readable(
     title_en="Handles empty payload",
     title_es="Maneja carga vacia",
-    intent_en="Returns a controlled error",
-    intent_es="Regresa un error controlado",
+    intention_en="Returns a controlled error",
+    intention_es="Regresa un error controlado",
     steps_en=["Send empty payload", "Assert ValueError"],
     steps_es=["Enviar carga vacia", "Validar ValueError"],
     criteria_en=["Raises ValueError", "Logs the error"],
@@ -576,17 +576,17 @@ def test_empty_payload():
 
 
 @readable(
-    intent="Si parse_decorated_spec_file extrae intent y título esperados desde @readable.",
+    intention="Si parse_decorated_spec_file extrae intention y título esperados desde @readable.",
     steps=[
-        "Crea un archivo temporal con readable, intent y steps multilinea",
+        "Crea un archivo temporal con readable, intention y steps multilinea",
         "Ejecuta parse_decorated_spec_file en ingles",
         "Verifica título, nombre del caso e intención extraída",
     ],
     criteria=[
-        "El intent y titulo se extraen con los valores esperados",
+        "El intention y titulo se extraen con los valores esperados",
     ],
 )
-def test_parse_decorated_spec_file_extracts_intent_and_title(tmp_path):
+def test_parse_decorated_spec_file_extracts_intention_and_title(tmp_path):
     parsed = _parse_readable_multiline_steps_file(tmp_path)
     assert parsed["title"] == "test_sample.py"
     assert parsed["tests"][0]["name"] == "test_sample.py"
@@ -594,9 +594,9 @@ def test_parse_decorated_spec_file_extracts_intent_and_title(tmp_path):
 
 
 @readable(
-    intent="Si parse_decorated_spec_file normaliza steps multilinea numerados a lista ordenada.",
+    intention="Si parse_decorated_spec_file normaliza steps multilinea numerados a lista ordenada.",
     steps=[
-        "Crea un archivo temporal con readable, intent y steps multilinea",
+        "Crea un archivo temporal con readable, intention y steps multilinea",
         "Ejecuta parse_decorated_spec_file en ingles",
         "Verifica que los pasos se normalicen como lista ordenada",
     ],
@@ -616,7 +616,7 @@ def _parse_readable_multiline_steps_file(tmp_path: Path) -> dict:
 
 @readable(
     title="test_sample.py",
-    intent="Parses english fields",
+    intention="Parses english fields",
     steps="""
 1. Read the file
 2. Extract the fields
@@ -631,26 +631,26 @@ def test_parse_readable_metadata_accepts_english_labels():
 
 
 @readable(
-    intent="Si el decorator readable conserva intent y title esperados en la metadata.",
+    intention="Si el decorator readable conserva intention y title esperados en la metadata.",
     steps=[
-        "Define un test decorado con readable usando intent y steps multilinea",
+        "Define un test decorado con readable usando intention y steps multilinea",
         "Lee __spec_meta__ de la funcion decorada",
-        "Verifica que title e intent queden almacenados con valores esperados",
+        "Verifica que title e intention queden almacenados con valores esperados",
     ],
     criteria=[
-        "La metadata almacenada conserva intent y title esperados",
+        "La metadata almacenada conserva intention y title esperados",
     ],
 )
-def test_readable_decorator_preserves_intent_and_title():
+def test_readable_decorator_preserves_intention_and_title():
     metadata = _build_readable_metadata_from_multiline_strings()
     assert metadata["title"] == "test_sample.py"
-    assert metadata["intent"] == "Parses english fields"
+    assert metadata["intention"] == "Parses english fields"
 
 
 @readable(
-    intent="Si el decorator readable normaliza steps y criteria cuando se definen como texto multilinea.",
+    intention="Si el decorator readable normaliza steps y criteria cuando se definen como texto multilinea.",
     steps=[
-        "Define un test decorado con readable usando intent y steps/criteria en texto",
+        "Define un test decorado con readable usando intention y steps/criteria en texto",
         "Lee __spec_meta__ de la funcion decorada",
         "Verifica que steps y criteria se normalicen a listas limpias",
     ],
@@ -667,7 +667,7 @@ def test_readable_decorator_normalizes_steps_and_criteria_lists():
 def _build_readable_metadata_from_multiline_strings() -> dict:
     @readable(
         title="test_sample.py",
-        intent="Parses english fields",
+        intention="Parses english fields",
         steps="""
 1. Read the file
 2. Extract the fields
@@ -684,7 +684,7 @@ def _build_readable_metadata_from_multiline_strings() -> dict:
 
 
 @readable(
-    intent="Si detect_language_from_decorators devuelve None cuando los idiomas empatan.",
+    intention="Si detect_language_from_decorators devuelve None cuando los idiomas empatan.",
     steps=[
         "Crea dos archivos de prueba, uno con metadata en ingles y otro en español",
         "Ejecuta detect_language_from_decorators sobre el directorio",
@@ -699,7 +699,7 @@ def test_detect_language_from_decorators_returns_none_on_tie(tmp_path):
     en_file.write_text(
         """from pytest_readable.decorators import readable
 
-@readable(intent_en="English metadata")
+@readable(intention_en="English metadata")
 def test_english():
     pass
 """,
@@ -709,7 +709,7 @@ def test_english():
     es_file.write_text(
         """from pytest_readable.decorators import readable
 
-@readable(intent_es="Metadata en español")
+@readable(intention_es="Metadata en español")
 def test_spanish():
     pass
 """,
@@ -720,7 +720,7 @@ def test_spanish():
 
 
 @readable(
-    intent="Si detect_language_from_decorators prioriza español cuando hay pistas en ese idioma.",
+    intention="Si detect_language_from_decorators prioriza español cuando hay pistas en ese idioma.",
     steps=[
         "Crea un archivo con metadata que usa acentos y etiquetas españolas",
         "Ejecuta detect_language_from_decorators sobre el directorio",
@@ -736,7 +736,7 @@ def test_detect_language_from_decorators_prefers_spanish(tmp_path):
         """from pytest_readable.decorators import readable
 
 @readable(
-    intent="Valida Qué prueba y Pasos para detectar español",
+    intention="Valida Qué prueba y Pasos para detectar español",
     steps=[
         "Qué prueba: describe el flujo español",
         "Pasos: confirma la detección automática",
@@ -752,7 +752,7 @@ def test_spanish_tokens():
 
 
 @readable(
-    intent="Ensures missing readable metadata is detected for module and class tests.",
+    intention="Ensures missing readable metadata is detected for module and class tests.",
     steps=[
         "Create test files with decorated and undecorated test functions",
         "Run find_tests_without_readable on the temporary directory",
@@ -768,7 +768,7 @@ def test_find_tests_without_readable_reports_missing_functions(tmp_path):
         """from pytest_readable.decorators import readable
 
 @readable(
-    intent="Documented",
+    intention="Documented",
     steps=["Step one"],
 )
 def test_documented():
@@ -785,7 +785,7 @@ def test_missing_case():
 
 class TestFlow:
     @readable(
-        intent="Documented method",
+        intention="Documented method",
         steps=["Step one"],
     )
     def test_documented_method(self):
@@ -806,7 +806,7 @@ class TestFlow:
 
 
 @readable(
-    intent="Ensures CLI missing-readable mode reports missing tests and skips pytest execution.",
+    intention="Ensures CLI missing-readable mode reports missing tests and skips pytest execution.",
     steps=[
         "Create a temporary test without @readable",
         "Intercept subprocess.run to prevent real pytest execution",
@@ -839,7 +839,7 @@ def test_without_readable():
 
 
 @readable(
-    intent="Si el wrapper readable elimina el token posicional pytest redundante del comando.",
+    intention="Si el wrapper readable elimina el token posicional pytest redundante del comando.",
     steps=[
         "Intercepta subprocess.run del CLI",
         "Ejecuta main con argumentos pytest y q",
@@ -856,7 +856,7 @@ def test_cli_ignores_leading_pytest_token_in_forwarded_command(monkeypatch):
 
 
 @readable(
-    intent="Si el wrapper readable activa flags de readable y opciones de captura esperadas.",
+    intention="Si el wrapper readable activa flags de readable y opciones de captura esperadas.",
     steps=[
         "Intercepta subprocess.run del CLI",
         "Ejecuta main con argumentos pytest y q",
@@ -891,7 +891,7 @@ def _run_cli_main_with_leading_pytest(monkeypatch):
 
 
 @readable(
-    intent="Si readable pytest --lang=es reenvía el idioma al comando final.",
+    intention="Si readable pytest --lang=es reenvía el idioma al comando final.",
     steps=[
         "Intercepta subprocess.run del CLI",
         "Ejecuta main con argumentos pytest y lang es",
@@ -908,7 +908,7 @@ def test_cli_forwards_lang_to_pytest_command(monkeypatch):
 
 
 @readable(
-    intent="Si readable pytest --lang=es aplica defaults silenciosos y readable-include-steps.",
+    intention="Si readable pytest --lang=es aplica defaults silenciosos y readable-include-steps.",
     steps=[
         "Intercepta subprocess.run del CLI",
         "Ejecuta main con argumentos pytest y lang es",
@@ -946,7 +946,7 @@ def _run_cli_main_with_lang_es(monkeypatch):
 
 
 @readable(
-    intent="Si el wrapper readable conserva secciones relevantes de fallo al filtrar la salida.",
+    intention="Si el wrapper readable conserva secciones relevantes de fallo al filtrar la salida.",
     steps=[
         "Simula salida con FAILURES, warnings, short summary y bloque readable",
         "Ejecuta el impresor filtrado del CLI",
@@ -965,7 +965,7 @@ def test_cli_prints_relevant_sections_when_pytest_fails(capsys):
 
 
 @readable(
-    intent="Si el wrapper readable omite la línea final de resumen bruto de pytest al filtrar fallas.",
+    intention="Si el wrapper readable omite la línea final de resumen bruto de pytest al filtrar fallas.",
     steps=[
         "Simula salida con FAILURES, warnings, short summary y bloque readable",
         "Ejecuta el impresor filtrado del CLI",

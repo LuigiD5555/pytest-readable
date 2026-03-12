@@ -4,7 +4,7 @@
 
 - Initial public release.
 - Human-readable pytest rendering from explicit `@readable(...)` metadata.
-- Terminal summaries with readable intent, steps, and pass conditions.
+- Terminal summaries with readable intention, steps, and pass conditions.
 - Markdown and CSV export for documented test suites.
 - Helper CLI command: `readable`.
 - Non-inferential architecture: render only what the author explicitly declares.
