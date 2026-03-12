@@ -12,7 +12,7 @@ license = { file = "LICENSE" }
 authors = [
   { name = "LuigiD5555" }
 ]
-keywords = ["pytest", "testing", "documentation", "tdd", "plugin", "specifications"]
+keywords = ["pytest", "testing", "documentation", "plugin", "specifications"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Framework :: Pytest",
