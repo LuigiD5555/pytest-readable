@@ -14,6 +14,11 @@ It makes explicitly described tests easier to read in the terminal and easier to
 pip install pytest-readable
 ```
 
+## Requirements
+
+- Python 3.10+
+- pytest 9.x
+
 ## Example
 
 ```python
@@ -38,7 +43,7 @@ def test_user_login():
 Run:
 
 ```bash
-pytest --readable --readable-include-steps
+pytest --readable-detailed
 ```
 
 Output:
@@ -71,10 +76,32 @@ Readable terminal summary:
 pytest --readable
 ```
 
-Readable terminal summary with steps:
+This prints a summarized readable report without pytest's native header or footer noise.
+
+Readable detailed report:
 
 ```bash
-pytest --readable --readable-include-steps
+pytest --readable-detailed
+```
+
+Detailed aliases:
+
+```bash
+pytest --readable --detailed
+pytest --readable -d
+```
+
+Readable verbose report:
+
+```bash
+pytest --readable-verbose
+```
+
+Verbose aliases:
+
+```bash
+pytest --readable --verbose
+pytest --readable -v
 ```
 
 Export Markdown documentation:
@@ -137,8 +164,35 @@ readable pytest tests/
 Equivalent pytest invocation:
 
 ```bash
-pytest --readable -q --no-header --color=yes --readable-include-steps tests/
+pytest --readable --color=yes tests/
 ```
+
+Detailed readable output:
+
+```bash
+readable --detailed pytest tests/
+readable pytest --detailed tests/
+readable pytest -d tests/
+```
+
+Verbose readable output:
+
+```bash
+readable pytest -v tests/
+readable pytest --verbose tests/
+```
+
+Mode equivalences:
+
+```bash
+readable pytest               -> pytest --readable
+readable pytest -d           -> pytest --readable -d
+readable pytest --detailed   -> pytest --readable --detailed
+readable pytest -v           -> pytest --readable -v
+readable pytest --verbose    -> pytest --readable --verbose
+```
+
+Note: `-d` works as a readable shorthand when used together with `--readable`, even though `pytest --help` lists the long-form detailed options.
 
 Helper-specific commands:
 
@@ -192,24 +246,6 @@ Example:
 
 ```bash
 pytest --readable-lang=es
-```
-
-## Next Steps
-
-The current release focuses on explicit, detailed readable output.
-
-Next improvements are likely to focus on additional rendering modes:
-
-- a more verbose mode with pytest command context, exit code, and richer execution summaries
-- a compact mode that renders only test intentions, without steps or pass conditions
-
-## Development
-
-```bash
-git clone https://github.com/LuigiD5555/pytest-readable
-cd pytest-readable
-pip install -e .
-pytest -q
 ```
 
 ## Contributing
