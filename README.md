@@ -4,9 +4,9 @@
 ![Python](https://img.shields.io/pypi/pyversions/pytest-readable)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-`pytest-readable` is a pytest plugin that renders collected tests as human-readable specifications and Markdown or CSV documentation.
+`pytest-readable` is a pytest plugin that turns tests into human-readable specifications and exports them to Markdown or CSV.
 
-It makes explicitly described tests easier to read in the terminal and easier to export as documentation.
+It is useful when you want pytest output to be easier to review, easier to share with non-developers, and easier to reuse as lightweight test documentation.
 
 ## Installation
 
@@ -19,7 +19,9 @@ pip install pytest-readable
 - Python 3.10+
 - pytest 9.x
 
-## Example
+## Quick Example
+
+Test:
 
 ```python
 from pytest_readable import readable
@@ -68,7 +70,7 @@ Detailed list
 Final summary: total=1, passed=0, failed=0, skipped=0
 ```
 
-## Quick Start
+## Common Commands
 
 Readable terminal summary:
 
@@ -121,6 +123,39 @@ Set a custom output path:
 ```bash
 pytest --readable --export=markdown --readable-out=docs/tests-readable.md
 ```
+
+## When to use pytest-readable
+
+Use `pytest-readable` when you want to:
+
+- make pytest output easier to read
+- export test documentation to Markdown or CSV
+- review test intent without reading raw test code
+- share tests with QA, analysts, or non-developers
+- keep tests and lightweight documentation aligned
+- present test coverage in a more human-friendly format
+
+## Who it is for
+
+`pytest-readable` is especially useful for:
+
+- solo developers
+- small teams
+- internal tools
+- lightweight QA workflows
+- multilingual teams that want readable test output
+- projects where tests also serve as living documentation
+
+## Why use it instead of plain pytest output?
+
+Plain pytest output is optimized for test execution and debugging.
+
+`pytest-readable` is optimized for:
+
+- readable review
+- explicit test intent
+- lightweight documentation export
+- sharing tests with people who do not want to read raw test code
 
 ## Design Philosophy
 
