@@ -194,6 +194,15 @@ Example:
 pytest --readable-lang=es
 ```
 
+## Next Steps
+
+The current release focuses on explicit, detailed readable output.
+
+Next improvements are likely to focus on additional rendering modes:
+
+- a more verbose mode with pytest command context, exit code, and richer execution summaries
+- a compact mode that renders only test intentions, without steps or pass conditions
+
 ## Development
 
 ```bash
