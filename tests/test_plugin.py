@@ -241,6 +241,23 @@ def test_plugin_exports_markdown_even_when_tests_fail(pytester):
     result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.md*"])
 
 
+@readable(
+    intention="Si la exportación reporta el archivo generado una sola vez por ejecución.",
+    steps=[
+        "Crea un test temporal que aprueba",
+        "Ejecuta pytest con --readable y --export=markdown",
+        "Cuenta cuántas veces aparece el mensaje de exportación en la salida",
+    ],
+    criteria=[
+        "El mensaje readable docs exported aparece una sola vez",
+    ],
+)
+def test_plugin_reports_export_once_per_run(pytester):
+    result, out_file = _run_export_docs_without_collect_only(pytester, "markdown")
+    assert out_file.exists()
+    assert result.stdout.str().count("readable docs exported:") == 1
+
+
 def _export_markdown_docs(pytester):
     return _run_export_docs(pytester, "markdown")
 
@@ -322,6 +339,26 @@ def _run_export_docs_with_failure(pytester, format_: str):
         test_docs="""
         def test_failing_case():
             assert False
+        """
+    )
+    extension = "md" if format_ == "markdown" else "csv"
+    out_file = pytester.path / "docs" / f"tests-readable.{extension}"
+
+    result = pytester.runpytest(
+        "--readable",
+        "--readable-lang=en",
+        f"--export={format_}",
+        f"--readable-out={out_file}",
+        "-q",
+    )
+    return result, out_file
+
+
+def _run_export_docs_without_collect_only(pytester, format_: str):
+    pytester.makepyfile(
+        test_docs="""
+        def test_documented_case():
+            assert True
         """
     )
     extension = "md" if format_ == "markdown" else "csv"

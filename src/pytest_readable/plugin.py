@@ -113,6 +113,8 @@ class ReadableRuntimePlugin:
 
     def _export_if_requested(self, terminal_reporter):
         """Export readable docs after summary if the flag is enabled."""
+        if self._export_done:
+            return
         export_format = self._get_export_format()
         if not self.config.getoption("readable_docs") and not export_format:
             return
@@ -197,10 +199,9 @@ class ReadableRuntimePlugin:
             )
 
         self._print_to_terminal(terminalreporter, text)
-        self._export_if_requested(terminalreporter)
 
     def pytest_sessionfinish(self, session, exitstatus):
-        """Fallback export path to keep docs generation independent from test outcomes."""
+        """Export docs after execution, including runs that finish with test failures."""
         del exitstatus
         if not self._enabled() or self._export_done:
             return
