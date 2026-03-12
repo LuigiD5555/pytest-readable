@@ -24,6 +24,8 @@ def test_help_exposes_readable_options(pytester):
     result.stdout.fnmatch_lines(
         [
             "*--readable*",
+            "*--detailed, --readable-detailed*",
+            "*--readable-verbose*",
             "*--readable-tree*",
             "*--readable-docs*",
             "*--readable-out=PATH*",
@@ -51,6 +53,154 @@ def test_readable_prints_summary_header_and_total(pytester):
 
 
 @readable(
+    intention="Si --readable muestra una salida resumida con nodeid e intención.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable y readable-lang=en",
+        "Verifica que la salida incluya la lista resumida y la intención del caso",
+    ],
+    criteria=[
+        "La salida no incluye Steps ni Pass conditions",
+    ],
+)
+def test_readable_shows_summarized_block_without_pytest_text(pytester):
+    result = _run_readable_summary(pytester)
+    stdout = result.stdout.str()
+    assert "test session starts" not in stdout
+    assert "1 passed" not in stdout
+    assert "Detailed list" in stdout
+    assert "- [passed] test_sample.py::test_ok" in stdout
+    assert "What it tests: test ok" in stdout
+    assert "Steps:" not in stdout
+    assert "Pass conditions:" not in stdout
+
+
+@readable(
+    intention="Si --readable-detailed muestra intención, pasos y criterios sin la salida nativa de pytest.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable-detailed y readable-lang=en",
+        "Verifica que aparezca la lista detallada con pasos y criterios",
+    ],
+    criteria=[
+        "La salida detallada incluye Steps y Pass conditions",
+    ],
+)
+def test_readable_detailed_hides_pytest_text_and_shows_steps_and_criteria(pytester):
+    result = _run_readable_summary(pytester, "--readable-detailed")
+    stdout = result.stdout.str()
+    assert "test session starts" not in stdout
+    assert "1 passed" not in stdout
+    assert "Detailed list" in stdout
+    assert "Display name: test ok" in stdout
+    assert "What it tests: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
+    intention="Si --readable-verbose añade contexto legible extra y conserva la salida nativa de pytest.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable-verbose y readable-lang=en",
+        "Verifica que aparezcan el display name, el resumen legible y la salida nativa de pytest",
+    ],
+    criteria=[
+        "La salida verbose incluye Display name y test session starts",
+    ],
+)
+def test_readable_verbose_shows_extra_case_context(pytester):
+    result = _run_readable_summary(pytester, "--readable-verbose")
+    stdout = result.stdout.str()
+    assert "test session starts" in stdout
+    assert "1 passed" in stdout
+    assert "Display name: test ok" in stdout
+    assert "What it tests: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
+    intention="Si pytest --readable -d activa el modo detallado sin salida nativa de pytest.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable y d",
+        "Verifica que aparezcan nombre legible, pasos y criterios sin cabecera nativa",
+    ],
+    criteria=[
+        "La salida coincide con el modo detallado",
+    ],
+)
+def test_readable_short_detailed_alias_matches_detailed_mode(pytester):
+    result = _run_readable_summary(pytester, "-d")
+    stdout = result.stdout.str()
+    assert "test session starts" not in stdout
+    assert "Display name: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
+    intention="Si pytest --readable --detailed activa el modo detallado sin salida nativa de pytest.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable y detailed",
+        "Verifica que aparezcan nombre legible, pasos y criterios sin cabecera nativa",
+    ],
+    criteria=[
+        "La salida coincide con el modo detallado",
+    ],
+)
+def test_readable_long_detailed_alias_matches_detailed_mode(pytester):
+    result = _run_readable_summary(pytester, "--detailed")
+    stdout = result.stdout.str()
+    assert "test session starts" not in stdout
+    assert "Display name: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
+    intention="Si pytest --readable -v activa el modo verbose.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable y v",
+        "Verifica que se conserve la salida nativa y aparezca display name",
+    ],
+    criteria=[
+        "La salida coincide con el modo verbose",
+    ],
+)
+def test_readable_short_verbose_alias_matches_verbose_mode(pytester):
+    result = _run_readable_summary(pytester, "-v")
+    stdout = result.stdout.str()
+    assert "test session starts" in stdout
+    assert "Display name: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
+    intention="Si pytest --readable --verbose activa el modo verbose.",
+    steps=[
+        "Crea un test simple en un proyecto temporal",
+        "Ejecuta pytest con readable y verbose",
+        "Verifica que se conserve la salida nativa y aparezca display name",
+    ],
+    criteria=[
+        "La salida coincide con el modo verbose",
+    ],
+)
+def test_readable_long_verbose_alias_matches_verbose_mode(pytester):
+    result = _run_readable_summary(pytester, "--verbose")
+    stdout = result.stdout.str()
+    assert "test session starts" in stdout
+    assert "Display name: test ok" in stdout
+    assert "Steps:" in stdout
+    assert "Pass conditions:" in stdout
+
+
+@readable(
     intention="Si readable mantiene outcomes de pytest al ejecutar una prueba aprobada.",
     steps=[
         "Crea un test simple en un proyecto temporal",
@@ -63,18 +213,27 @@ def test_readable_prints_summary_header_and_total(pytester):
 )
 def test_readable_prints_summary_reports_passed_outcome(pytester):
     result = _run_readable_summary(pytester)
-    result.assert_outcomes(passed=1)
+    assert result.ret == 0
+    assert "- passed: 1" in result.stdout.str()
 
 
-def _run_readable_summary(pytester):
+def _run_readable_summary(pytester, *extra_args: str):
     pytester.makepyfile(
         test_sample="""
+        from pytest_readable.decorators import readable
+
+        @readable(
+            intention="test ok",
+            steps=["run the test"],
+            criteria=["it passes"],
+        )
         def test_ok():
             assert True
         """
     )
 
-    return pytester.runpytest("--readable", "--readable-lang=en", "-q")
+    args = ["--readable", "--readable-lang=en", *extra_args]
+    return pytester.runpytest(*args)
 
 
 @readable(
@@ -237,7 +396,8 @@ def test_plugin_exports_csv_with_export_flag(pytester):
 def test_plugin_exports_markdown_even_when_tests_fail(pytester):
     result, out_file = _run_export_docs_with_failure(pytester, "markdown")
     assert out_file.exists()
-    result.assert_outcomes(failed=1)
+    assert result.ret == 1
+    assert "- failed: 1" in result.stdout.str()
     result.stdout.fnmatch_lines(["*readable docs exported:*tests-readable.md*"])
 
 

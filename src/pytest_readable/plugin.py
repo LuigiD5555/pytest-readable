@@ -36,16 +36,75 @@ class ReadableRuntimePlugin:
         return any(
             [
                 self.config.getoption("readable"),
+                self.config.getoption("readable_detailed"),
+                self.config.getoption("readable_verbose"),
                 self.config.getoption("readable_tree"),
                 self.config.getoption("readable_docs"),
                 self._get_export_format() is not None,
             ]
         )
 
+    def _summary_mode(self) -> str:
+        """Return the active readable rendering mode."""
+        if self.config.getoption("readable_verbose"):
+            return "verbose"
+        if self.config.getoption("readable") and self._verbosity() > 0:
+            return "verbose"
+        if self.config.getoption("readable_detailed"):
+            return "detailed"
+        if self.config.getoption("readable"):
+            return "summary"
+        return "off"
+
     def _verbosity(self) -> int:
         """Normalize pytest verbosity level for conditional output."""
         value = getattr(self.config.option, "verbose", 0)
         return int(value or 0)
+
+    def _summary_verbosity(self) -> int:
+        """Return the effective verbosity used by the readable summary renderer."""
+        mode = self._summary_mode()
+        if mode == "verbose":
+            return 2
+        if mode in {"summary", "detailed"}:
+            return 1
+        return self._verbosity()
+
+    def _summary_include_what(self) -> bool:
+        """Return True when the readable summary should include the case intention."""
+        return self._summary_mode() in {"summary", "detailed", "verbose"}
+
+    def _summary_include_steps(self) -> bool:
+        """Return True when the readable summary should include full case details."""
+        if self.config.getoption("readable_include_steps"):
+            return True
+        mode = self._summary_mode()
+        if mode == "summary":
+            return False
+        if mode in {"detailed", "verbose"}:
+            return True
+        return self.config.getoption("readable_include_steps")
+
+    def _render_summary(self) -> str:
+        """Render the current readable summary according to the active mode."""
+        summary_verbosity = self._summary_verbosity()
+        include_what = self._summary_include_what()
+        include_steps = self._summary_include_steps()
+        include_display_name = self._summary_mode() in {"detailed", "verbose"}
+        if self.config.getoption("readable_tree"):
+            return render_tree_text(self.suite, include_steps=include_steps)
+        return render_summary_text(
+            self.suite,
+            self.i18n.language,
+            verbose=summary_verbosity,
+            include_what=include_what,
+            include_steps=include_steps,
+            include_display_name=include_display_name,
+        )
+
+    def _suppress_native_pytest_output(self) -> bool:
+        """Return True when pytest's own terminal output should stay hidden."""
+        return self._summary_mode() in {"summary", "detailed"}
 
     def _ensure_suite(self, items):
         """Build the readable suite once per session from collected items."""
@@ -145,19 +204,20 @@ class ReadableRuntimePlugin:
             if terminal_reporter is None:
                 return
 
-            include_steps = self.config.getoption("readable_include_steps") or self._verbosity() >= 2
-            if self.config.getoption("readable_tree"):
-                text = render_tree_text(self.suite, include_steps=include_steps)
-            else:
-                text = render_summary_text(
-                    self.suite,
-                    self.i18n.language,
-                    verbose=self._verbosity(),
-                    include_steps=include_steps,
-                )
+            text = self._render_summary()
             self._print_to_terminal(terminal_reporter, text)
             self._export_if_requested(terminal_reporter)
             self.rendered_in_collect_only = True
+
+    def pytest_sessionstart(self, session):
+        """Silence pytest's native terminal noise for non-verbose readable modes."""
+        del session
+        if not self._suppress_native_pytest_output():
+            return
+        terminal_reporter = self.config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is None:
+            return
+        self.config.option.verbose = -2
 
     def pytest_runtest_logreport(self, report):
         """Map pytest reports to readable case statuses once each test call finishes."""
@@ -176,6 +236,17 @@ class ReadableRuntimePlugin:
                 case.status = status
                 break
 
+    def pytest_report_teststatus(self, report, config):
+        """Suppress pytest progress glyphs when readable owns the terminal output."""
+        del config
+        if not self._suppress_native_pytest_output():
+            return None
+        if report.when not in {"setup", "call", "teardown"}:
+            return None
+        if report.when == "setup" and report.skipped:
+            return "skipped", "", ""
+        return report.outcome, "", ""
+
     def pytest_terminal_summary(self, terminalreporter):
         """Show the readable summary when pytest completes, unless collect-only already printed it."""
         if not self._enabled():
@@ -186,19 +257,9 @@ class ReadableRuntimePlugin:
 
         if self.suite is None:
             return
-
-        include_steps = self.config.getoption("readable_include_steps") or self._verbosity() >= 2
-        if self.config.getoption("readable_tree"):
-            text = render_tree_text(self.suite, include_steps=include_steps)
-        else:
-            text = render_summary_text(
-                self.suite,
-                self.i18n.language,
-                verbose=self._verbosity(),
-                include_steps=include_steps,
-            )
-
-        self._print_to_terminal(terminalreporter, text)
+        if self._suppress_native_pytest_output():
+            return
+        self._print_to_terminal(terminalreporter, self._render_summary())
 
     def pytest_sessionfinish(self, session, exitstatus):
         """Export docs after execution, including runs that finish with test failures."""
@@ -213,6 +274,9 @@ class ReadableRuntimePlugin:
         if self.suite is None:
             self._ensure_suite(getattr(session, "items", []))
 
+        if self.suite is not None and not self.config.getoption("collectonly") and self._suppress_native_pytest_output():
+            self._print_to_terminal(terminal_reporter, self._render_summary())
+
         self._export_if_requested(terminal_reporter)
 
 
@@ -220,6 +284,18 @@ def pytest_addoption(parser):
     """Register CLI options that control readable output, tree view, and exports."""
     group = parser.getgroup("readable")
     group.addoption("--readable", action="store_true", help="Print a readable pytest summary")
+    group.addoption(
+        "--detailed",
+        "--readable-detailed",
+        dest="readable_detailed",
+        action="store_true",
+        help="Print a detailed readable summary with steps and pass conditions",
+    )
+    group.addoption(
+        "--readable-verbose",
+        action="store_true",
+        help="Print an expanded readable summary with extra metadata context",
+    )
     group.addoption("--readable-tree", action="store_true", help="Print the collected tests as a hierarchy")
     group.addoption(
         "--readable-docs",
@@ -263,7 +339,30 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_load_initial_conftests(early_config, parser, args):
+    """Normalize readable shorthand flags before pytest parses the command line."""
+    del early_config, parser
+    if "--readable" not in args:
+        return
+    for index, value in enumerate(list(args)):
+        if value == "-d":
+            args[index] = "--readable-detailed"
+
+
 def pytest_configure(config):
     """Register the runtime plugin once pytest is configuring."""
+    readable_verbose_requested = config.getoption("readable_verbose") or (
+        config.getoption("readable") and int(getattr(config.option, "verbose", 0) or 0) > 0
+    )
+    readable_mode_active = any(
+        [
+            config.getoption("readable"),
+            config.getoption("readable_detailed"),
+            config.getoption("readable_verbose"),
+        ]
+    )
+    if readable_mode_active and not readable_verbose_requested:
+        config.option.no_header = True
+        config.option.no_summary = True
     plugin = ReadableRuntimePlugin(config)
     config.pluginmanager.register(plugin, "pytest_readable_runtime")

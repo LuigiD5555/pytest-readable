@@ -1,3 +1,4 @@
+import sys
 import subprocess
 from gettext import GNUTranslations
 from pathlib import Path
@@ -852,7 +853,7 @@ def test_without_readable():
 def test_cli_ignores_leading_pytest_token_in_forwarded_command(monkeypatch):
     code, captured = _run_cli_main_with_leading_pytest(monkeypatch)
     assert code == 0
-    assert captured["command"] == ["pytest", "--readable", "-q", "--color=yes", "--readable-include-steps"]
+    assert captured["command"] == [sys.executable, "-m", "pytest", "--readable", "-q", "--color=yes"]
 
 
 @readable(
@@ -908,27 +909,167 @@ def test_cli_forwards_lang_to_pytest_command(monkeypatch):
 
 
 @readable(
-    intention="Si readable pytest --lang=es aplica defaults silenciosos y readable-include-steps.",
+    intention="Si readable pytest --lang=es ejecuta el modo resumido sin forzar flags de detalle.",
     steps=[
         "Intercepta subprocess.run del CLI",
         "Ejecuta main con argumentos pytest y lang es",
-        "Verifica flags q, no-header, color y readable-include-steps",
+        "Verifica readable-lang y color sin forzar flags de detalle",
     ],
     criteria=[
-        "Se aplican defaults silenciosos y readable-include-steps",
+        "El comando final usa --readable sin flags adicionales de detalle",
     ],
 )
-def test_cli_forwards_lang_and_applies_quiet_defaults(monkeypatch):
+def test_cli_forwards_lang_without_forcing_quiet_defaults(monkeypatch):
     code, captured_command = _run_cli_main_with_lang_es(monkeypatch)
     assert code == 0
     assert captured_command == [
+        sys.executable,
+        "-m",
         "pytest",
         "--readable",
         "--readable-lang=es",
-        "-q",
-        "--no-header",
         "--color=yes",
-        "--readable-include-steps",
+    ]
+
+
+@readable(
+    intention="Si readable pytest -v activa readable-verbose además de reenviar la verbosidad de pytest.",
+    steps=[
+        "Intercepta subprocess.run del CLI",
+        "Ejecuta main con argumentos pytest y -v",
+        "Verifica que el comando final conserve -v y agregue --readable-verbose",
+    ],
+    criteria=[
+        "El comando final incluye -v y --readable-verbose",
+    ],
+)
+def test_cli_maps_short_verbose_flag_to_readable_verbose(monkeypatch):
+    code, captured_command = _run_cli_main_with_verbose(monkeypatch, "-v")
+    assert code == 0
+    assert captured_command == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-v",
+        "--readable-verbose",
+        "--color=yes",
+    ]
+
+
+@readable(
+    intention="Si readable pytest --verbose activa readable-verbose además de reenviar la verbosidad de pytest.",
+    steps=[
+        "Intercepta subprocess.run del CLI",
+        "Ejecuta main con argumentos pytest y --verbose",
+        "Verifica que el comando final conserve --verbose y agregue --readable-verbose",
+    ],
+    criteria=[
+        "El comando final incluye --verbose y --readable-verbose",
+    ],
+)
+def test_cli_maps_long_verbose_flag_to_readable_verbose(monkeypatch):
+    code, captured_command = _run_cli_main_with_verbose(monkeypatch, "--verbose")
+    assert code == 0
+    assert captured_command == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--verbose",
+        "--readable-verbose",
+        "--color=yes",
+    ]
+
+
+@readable(
+    intention="Si readable pytest --detailed activa readable-detailed como modo explícito.",
+    steps=[
+        "Intercepta subprocess.run del CLI",
+        "Ejecuta main con argumentos pytest y detailed",
+        "Verifica que el comando final use readable-detailed",
+    ],
+    criteria=[
+        "El comando final incluye --readable-detailed y no deja --readable",
+    ],
+)
+def test_cli_maps_detailed_flag_to_readable_detailed(monkeypatch):
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command: list[str], *, text: bool, capture_output: bool, check: bool) -> subprocess.CompletedProcess:
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="Readable summary\n- Total: 0\n", stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    code = cli.main(["pytest", "--detailed"])
+    assert code == 0
+    assert captured["command"] == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--readable-detailed",
+        "--color=yes",
+    ]
+
+
+@readable(
+    intention="Si readable pytest -d activa readable-detailed como alias corto del modo detallado.",
+    steps=[
+        "Intercepta subprocess.run del CLI",
+        "Ejecuta main con argumentos pytest y d",
+        "Verifica que el comando final use readable-detailed",
+    ],
+    criteria=[
+        "El comando final incluye --readable-detailed",
+    ],
+)
+def test_cli_maps_short_detailed_flag_to_readable_detailed(monkeypatch):
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command: list[str], *, text: bool, capture_output: bool, check: bool) -> subprocess.CompletedProcess:
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="Readable summary\n- Total: 0\n", stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    code = cli.main(["pytest", "-d"])
+    assert code == 0
+    assert captured["command"] == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--readable-detailed",
+        "--color=yes",
+    ]
+
+
+@readable(
+    intention="Si readable pytest -detailed activa readable-detailed como alias extendido del modo detallado.",
+    steps=[
+        "Intercepta subprocess.run del CLI",
+        "Ejecuta main con argumentos pytest y detailed con prefijo corto",
+        "Verifica que el comando final use readable-detailed",
+    ],
+    criteria=[
+        "El comando final incluye --readable-detailed",
+    ],
+)
+def test_cli_maps_extended_short_detailed_flag_to_readable_detailed(monkeypatch):
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command: list[str], *, text: bool, capture_output: bool, check: bool) -> subprocess.CompletedProcess:
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="Readable summary\n- Total: 0\n", stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    code = cli.main(["pytest", "-detailed"])
+    assert code == 0
+    assert captured["command"] == [
+        sys.executable,
+        "-m",
+        "pytest",
+        "--readable-detailed",
+        "--color=yes",
     ]
 
 
@@ -942,6 +1083,19 @@ def _run_cli_main_with_lang_es(monkeypatch):
     monkeypatch.setattr(cli.subprocess, "run", fake_run)
 
     code = cli.main(["pytest", "--lang=es"])
+    return code, captured["command"]
+
+
+def _run_cli_main_with_verbose(monkeypatch, verbose_flag: str):
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command: list[str], *, text: bool, capture_output: bool, check: bool) -> subprocess.CompletedProcess:
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="Readable summary\n- Total: 0\n", stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    code = cli.main(["pytest", verbose_flag])
     return code, captured["command"]
 
 

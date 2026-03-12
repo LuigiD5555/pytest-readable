@@ -16,8 +16,15 @@ def _status_label(status: str, language: str) -> str:
     return labels.get(status, labels["unknown"])
 
 
-def render_summary_text(suite: ReadableSuite, language: str, verbose: int = 0, include_steps: bool = False) -> str:
-    """Produce a localized textual summary with an optional detailed list."""
+def render_summary_text(
+    suite: ReadableSuite,
+    language: str,
+    verbose: int = 0,
+    include_what: bool = False,
+    include_steps: bool = False,
+    include_display_name: bool = False,
+) -> str:
+    """Produce a localized textual summary with configurable case detail levels."""
     counts = suite.counts()
     lines: list[str] = []
     summary_pack = get_language_pack(language)
@@ -30,7 +37,7 @@ def render_summary_text(suite: ReadableSuite, language: str, verbose: int = 0, i
         if key in counts:
             lines.append(f"- {_status_label(key, summary_pack.code)}: {counts[key]}")
 
-    if verbose >= 1 or include_steps:
+    if verbose >= 1 or include_what or include_steps or include_display_name:
         lines.append("")
         lines.append(summary_pack.list_title)
         lines.append("")
@@ -38,15 +45,15 @@ def render_summary_text(suite: ReadableSuite, language: str, verbose: int = 0, i
             case_pack = get_language_pack(case.language or summary_pack.code)
             status_text = _status_label(case.status, case_pack.code)
             lines.append(f"- [{status_text}] {case.nodeid}")
-            if verbose >= 2:
+            if include_display_name:
                 lines.append(f"    {case_pack.display_name_label}: {case.display_name}")
-            if (verbose >= 2 or include_steps) and case.what:
+            if (include_what or include_steps) and case.what:
                 lines.append(f"    {case_pack.what_label}: {case.what}")
             if include_steps and case.steps:
                 lines.append(f"    {case_pack.steps_label}:")
                 for step_idx, step in enumerate(case.steps, 1):
                     lines.append(f"      {step_idx}. {step}")
-            if include_steps or verbose >= 2:
+            if include_steps:
                 lines.append(f"    {case_pack.criteria_label}:")
                 if case.criteria:
                     for check_idx, check in enumerate(case.criteria, 1):

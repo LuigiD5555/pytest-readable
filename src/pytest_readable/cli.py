@@ -79,6 +79,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="tests",
         help="Root directory used by --find-missing (default: tests)",
     )
+    parser.add_argument(
+        "-d",
+        "-detailed",
+        "--detailed",
+        action="store_true",
+        help="Render the detailed readable report with steps and pass conditions",
+    )
     return parser
 
 
@@ -103,22 +110,32 @@ def main(argv: list[str] | None = None) -> int:
     if not any(part.startswith("--readable") for part in pytest_args):
         pytest_args.insert(0, "--readable")
 
+    if args.detailed and "--readable-detailed" not in pytest_args and "--readable-verbose" not in pytest_args:
+        if "--readable" in pytest_args:
+            pytest_args.remove("--readable")
+        pytest_args.insert(0, "--readable-detailed")
+
     if not any(part.startswith("--readable-lang") for part in pytest_args) and args.lang != "auto":
         pytest_args.append(f"--readable-lang={args.lang}")
 
     if args.export:
         pytest_args.append(f"--export={args.export}")
 
-    if not any(part.startswith("-q") or part in {"--quiet", "-v", "--verbose"} for part in pytest_args):
-        pytest_args.extend(["-q", "--no-header"])
+    requested_verbose = any(
+        part == "--verbose" or (part.startswith("-v") and part != "-")
+        for part in pytest_args
+    )
+    if requested_verbose and not any(
+        part in {"--readable-verbose", "--readable-detailed"} for part in pytest_args
+    ):
+        if "--readable" in pytest_args:
+            pytest_args.remove("--readable")
+        pytest_args.append("--readable-verbose")
 
     if not any(part.startswith("--color=") for part in pytest_args):
         pytest_args.append("--color=yes")
 
-    if "--readable-include-steps" not in pytest_args:
-        pytest_args.append("--readable-include-steps")
-
-    command = ["pytest", *pytest_args]
+    command = [sys.executable, "-m", "pytest", *pytest_args]
     result = subprocess.run(command, text=True, capture_output=True, check=False)
     _print_wrapped_output(result.stdout, result.stderr, result.returncode)
     return result.returncode
