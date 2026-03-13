@@ -8,14 +8,14 @@ from pytest_readable.plugin import ReadableRuntimePlugin
 
 
 @readable(
-    intention="Si el plugin registra sus flags y aparecen en pytest help.",
+    intention="Whether the plugin registers its flags and they appear in pytest help.",
     steps=[
-        "Ejecuta pytest con help",
-        "Busca flags readable en la salida",
-        "Verifica que todas las opciones esperadas esten presentes",
+        "Run pytest with help",
+        "Look for readable flags in the output",
+        "Verify that all expected options are present",
     ],
     criteria=[
-        "La salida de help incluye todas las flags readable esperadas",
+        "The help output includes all expected readable flags",
     ],
 )
 def test_help_exposes_readable_options(pytester):
@@ -37,14 +37,14 @@ def test_help_exposes_readable_options(pytester):
 
 
 @readable(
-    intention="Si readable muestra el encabezado y total en el resumen integrado.",
+    intention="Whether readable shows the header and total in the integrated summary.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y readable-lang=en",
-        "Verifica presencia del encabezado y total de pruebas en la salida",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and readable-lang=en",
+        "Verify that the output includes the header and total test count",
     ],
     criteria=[
-        "La salida contiene Readable summary y el total correcto",
+        "The output contains Readable summary and the correct total",
     ],
 )
 def test_readable_prints_summary_header_and_total(pytester):
@@ -53,14 +53,14 @@ def test_readable_prints_summary_header_and_total(pytester):
 
 
 @readable(
-    intention="Si --readable muestra una salida resumida con nodeid e intención.",
+    intention="Whether --readable shows a summarized output with nodeid and intention.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y readable-lang=en",
-        "Verifica que la salida incluya la lista resumida y la intención del caso",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and readable-lang=en",
+        "Verify that the output includes the summarized list and the case intention",
     ],
     criteria=[
-        "La salida no incluye Steps ni Pass conditions",
+        "The output does not include Steps or Pass conditions",
     ],
 )
 def test_readable_shows_summarized_block_without_pytest_text(pytester):
@@ -76,14 +76,14 @@ def test_readable_shows_summarized_block_without_pytest_text(pytester):
 
 
 @readable(
-    intention="Si --readable-detailed muestra intención, pasos y criterios sin la salida nativa de pytest.",
+    intention="Whether --readable-detailed shows intention, steps, and criteria without native pytest output.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable-detailed y readable-lang=en",
-        "Verifica que aparezca la lista detallada con pasos y criterios",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable-detailed and readable-lang=en",
+        "Verify that the detailed list with steps and criteria appears",
     ],
     criteria=[
-        "La salida detallada incluye Steps y Pass conditions",
+        "The detailed output includes Steps and Pass conditions",
     ],
 )
 def test_readable_detailed_hides_pytest_text_and_shows_steps_and_criteria(pytester):
@@ -99,14 +99,14 @@ def test_readable_detailed_hides_pytest_text_and_shows_steps_and_criteria(pytest
 
 
 @readable(
-    intention="Si --readable-verbose añade contexto legible extra y conserva la salida nativa de pytest.",
+    intention="Whether --readable-verbose adds extra readable context and keeps the native pytest output.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable-verbose y readable-lang=en",
-        "Verifica que aparezcan el display name, el resumen legible y la salida nativa de pytest",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable-verbose and readable-lang=en",
+        "Verify that the display name, readable summary, and native pytest output appear",
     ],
     criteria=[
-        "La salida verbose incluye Display name y test session starts",
+        "The verbose output includes Display name and test session starts",
     ],
 )
 def test_readable_verbose_shows_extra_case_context(pytester):
@@ -121,14 +121,14 @@ def test_readable_verbose_shows_extra_case_context(pytester):
 
 
 @readable(
-    intention="Si pytest --readable -d activa el modo detallado sin salida nativa de pytest.",
+    intention="Whether pytest --readable -d enables detailed mode without native pytest output.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y d",
-        "Verifica que aparezcan nombre legible, pasos y criterios sin cabecera nativa",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and d",
+        "Verify that the readable name, steps, and criteria appear without the native header",
     ],
     criteria=[
-        "La salida coincide con el modo detallado",
+        "The output matches detailed mode",
     ],
 )
 def test_readable_short_detailed_alias_matches_detailed_mode(pytester):
@@ -141,14 +141,14 @@ def test_readable_short_detailed_alias_matches_detailed_mode(pytester):
 
 
 @readable(
-    intention="Si pytest --readable --detailed activa el modo detallado sin salida nativa de pytest.",
+    intention="Whether pytest --readable --detailed enables detailed mode without native pytest output.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y detailed",
-        "Verifica que aparezcan nombre legible, pasos y criterios sin cabecera nativa",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and detailed",
+        "Verify that the readable name, steps, and criteria appear without the native header",
     ],
     criteria=[
-        "La salida coincide con el modo detallado",
+        "The output matches detailed mode",
     ],
 )
 def test_readable_long_detailed_alias_matches_detailed_mode(pytester):
@@ -161,14 +161,14 @@ def test_readable_long_detailed_alias_matches_detailed_mode(pytester):
 
 
 @readable(
-    intention="Si pytest --readable -v activa el modo verbose.",
+    intention="Whether pytest --readable -v enables verbose mode.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y v",
-        "Verifica que se conserve la salida nativa y aparezca display name",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and v",
+        "Verify that the native output is preserved and the display name appears",
     ],
     criteria=[
-        "La salida coincide con el modo verbose",
+        "The output matches verbose mode",
     ],
 )
 def test_readable_short_verbose_alias_matches_verbose_mode(pytester):
@@ -181,14 +181,14 @@ def test_readable_short_verbose_alias_matches_verbose_mode(pytester):
 
 
 @readable(
-    intention="Si pytest --readable --verbose activa el modo verbose.",
+    intention="Whether pytest --readable --verbose enables verbose mode.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y verbose",
-        "Verifica que se conserve la salida nativa y aparezca display name",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and verbose",
+        "Verify that the native output is preserved and the display name appears",
     ],
     criteria=[
-        "La salida coincide con el modo verbose",
+        "The output matches verbose mode",
     ],
 )
 def test_readable_long_verbose_alias_matches_verbose_mode(pytester):
@@ -201,14 +201,14 @@ def test_readable_long_verbose_alias_matches_verbose_mode(pytester):
 
 
 @readable(
-    intention="Si readable mantiene outcomes de pytest al ejecutar una prueba aprobada.",
+    intention="Whether readable keeps pytest outcomes when running a passing test.",
     steps=[
-        "Crea un test simple en un proyecto temporal",
-        "Ejecuta pytest con readable y readable-lang=en",
-        "Verifica que pytest reporte exactamente un test aprobado",
+        "Create a simple test in a temporary project",
+        "Run pytest with readable and readable-lang=en",
+        "Verify that pytest reports exactly one passing test",
     ],
     criteria=[
-        "Pytest reporta el test como aprobado",
+        "Pytest reports the test as passed",
     ],
 )
 def test_readable_prints_summary_reports_passed_outcome(pytester):
@@ -237,14 +237,14 @@ def _run_readable_summary(pytester, *extra_args: str):
 
 
 @readable(
-    intention="Si collect-only con readable-tree imprime jerarquia por modulo y clase.",
+    intention="Whether collect-only with readable-tree prints the hierarchy by module and class.",
     steps=[
-        "Crea un test dentro de una clase",
-        "Ejecuta pytest en collect-only con readable-tree",
-        "Verifica modulo, clase y nombre legible",
+        "Create a test inside a class",
+        "Run pytest in collect-only mode with readable-tree",
+        "Verify the module, class, and readable name",
     ],
     criteria=[
-        "El arbol incluye modulo, clase y nombre de prueba normalizado",
+        "The tree includes the module, class, and normalized test name",
     ],
 )
 def test_collect_only_readable_tree_prints_hierarchy(pytester):
@@ -262,14 +262,14 @@ def test_collect_only_readable_tree_prints_hierarchy(pytester):
 
 
 @readable(
-    intention="Si readable con intention y pasos multilinea aparece en la salida detallada.",
+    intention="Whether readable with intention and multiline steps appears in the detailed output.",
     steps=[
-        "Crea un test temporal con readable intention y steps multilinea",
-        "Ejecuta pytest en collect-only con readable include-steps",
-        "Verifica encabezado, detalle e impresion de pasos",
+        "Create a temporary test with readable intention and multiline steps",
+        "Run pytest in collect-only mode with readable include-steps",
+        "Verify the header, details, and printed steps",
     ],
     criteria=[
-        "La salida incluye intention, pasos y criterios documentados del caso temporal",
+        "The output includes the intention, steps, and documented criteria for the temporary case",
     ],
 )
 def test_readable_decorator_with_multiline_steps_is_rendered(pytester):
@@ -314,14 +314,14 @@ def test_readable_decorator_with_multiline_steps_is_rendered(pytester):
 
 
 @readable(
-    intention="Si el plugin crea el archivo markdown cuando se exporta documentación.",
+    intention="Whether the plugin creates the markdown file when documentation is exported.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest en collect-only con formato markdown y ruta de salida",
-        "Verifica que el archivo markdown exista en la ruta de salida",
+        "Create a temporary test",
+        "Run pytest in collect-only mode with markdown format and an output path",
+        "Verify that the markdown file exists at the output path",
     ],
     criteria=[
-        "Se crea el archivo markdown en la ruta indicada",
+        "The markdown file is created at the specified path",
     ],
 )
 def test_plugin_exports_markdown_creates_output_file(pytester):
@@ -331,14 +331,14 @@ def test_plugin_exports_markdown_creates_output_file(pytester):
 
 
 @readable(
-    intention="Si el markdown exportado contiene encabezado y detalle esperado del caso.",
+    intention="Whether the exported markdown contains the expected header and case details.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest en collect-only con formato markdown y ruta de salida",
-        "Verifica encabezado y campos esperados en el contenido exportado",
+        "Create a temporary test",
+        "Run pytest in collect-only mode with markdown format and an output path",
+        "Verify the expected header and fields in the exported content",
     ],
     criteria=[
-        "El contenido exportado contiene el encabezado esperado",
+        "The exported content contains the expected header",
     ],
 )
 def test_plugin_exports_markdown_includes_expected_content(pytester):
@@ -349,14 +349,14 @@ def test_plugin_exports_markdown_includes_expected_content(pytester):
 
 
 @readable(
-    intention="Si --export=markdown habilita la exportación directamente desde el flag nuevo.",
+    intention="Whether --export=markdown enables export directly from the new flag.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest collect-only con --readable y --export=markdown",
-        "Confirma que el archivo Markdown se crea y el log reporta la exportación",
+        "Create a temporary test",
+        "Run pytest collect-only with --readable and --export=markdown",
+        "Confirm that the Markdown file is created and the log reports the export",
     ],
     criteria=[
-        "La exportación ocurre usando solo el flag --export",
+        "The export happens using only the --export flag",
     ],
 )
 def test_plugin_exports_markdown_with_export_flag(pytester):
@@ -366,14 +366,14 @@ def test_plugin_exports_markdown_with_export_flag(pytester):
 
 
 @readable(
-    intention="Si --export=csv crea exportación CSV idéntica a --readable-docs.",
+    intention="Whether --export=csv creates a CSV export identical to --readable-docs.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest collect-only con --readable y --export=csv",
-        "Confirma que el archivo CSV se genera y se reporta la exportación",
+        "Create a temporary test",
+        "Run pytest collect-only with --readable and --export=csv",
+        "Confirm that the CSV file is generated and the export is reported",
     ],
     criteria=[
-        "La exportación CSV funciona cuando se usa el flag --export",
+        "CSV export works when the --export flag is used",
     ],
 )
 def test_plugin_exports_csv_with_export_flag(pytester):
@@ -383,14 +383,14 @@ def test_plugin_exports_csv_with_export_flag(pytester):
 
 
 @readable(
-    intention="Si la exportación se ejecuta aunque exista una prueba fallida.",
+    intention="Whether the export runs even when there is a failing test.",
     steps=[
-        "Crea un test temporal que falla",
-        "Ejecuta pytest con --readable y --export=markdown",
-        "Verifica que el archivo de salida se haya creado",
+        "Create a temporary test that fails",
+        "Run pytest with --readable and --export=markdown",
+        "Verify that the output file was created",
     ],
     criteria=[
-        "El archivo markdown se exporta incluso cuando pytest termina con fallo",
+        "The markdown file is exported even when pytest ends with a failure",
     ],
 )
 def test_plugin_exports_markdown_even_when_tests_fail(pytester):
@@ -402,14 +402,14 @@ def test_plugin_exports_markdown_even_when_tests_fail(pytester):
 
 
 @readable(
-    intention="Si la exportación reporta el archivo generado una sola vez por ejecución.",
+    intention="Whether the export reports the generated file only once per run.",
     steps=[
-        "Crea un test temporal que aprueba",
-        "Ejecuta pytest con --readable y --export=markdown",
-        "Cuenta cuántas veces aparece el mensaje de exportación en la salida",
+        "Create a temporary test that passes",
+        "Run pytest with --readable and --export=markdown",
+        "Count how many times the export message appears in the output",
     ],
     criteria=[
-        "El mensaje readable docs exported aparece una sola vez",
+        "The readable docs exported message appears only once",
     ],
 )
 def test_plugin_reports_export_once_per_run(pytester):
@@ -423,14 +423,14 @@ def _export_markdown_docs(pytester):
 
 
 @readable(
-    intention="Si el plugin crea el archivo CSV en la ruta indicada.",
+    intention="Whether the plugin creates the CSV file at the specified path.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest en collect-only con formato csv y ruta de salida",
-        "Verifica que el archivo CSV exista en la ruta de salida",
+        "Create a temporary test",
+        "Run pytest in collect-only mode with csv format and an output path",
+        "Verify that the CSV file exists at the output path",
     ],
     criteria=[
-        "Se crea el archivo CSV en la ruta indicada",
+        "The CSV file is created at the specified path",
     ],
 )
 def test_plugin_exports_csv_creates_output_file(pytester):
@@ -439,14 +439,14 @@ def test_plugin_exports_csv_creates_output_file(pytester):
 
 
 @readable(
-    intention="Si el CSV exportado incluye encabezados y columnas esperadas para el caso.",
+    intention="Whether the exported CSV includes the expected headers and columns for the case.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest en collect-only con formato csv y ruta de salida",
-        "Verifica encabezados y valores clave de la fila exportada",
+        "Create a temporary test",
+        "Run pytest in collect-only mode with csv format and an output path",
+        "Verify the headers and key values in the exported row",
     ],
     criteria=[
-        "La cabecera CSV coincide con las columnas esperadas",
+        "The CSV header matches the expected columns",
     ],
 )
 def test_plugin_exports_csv_includes_expected_columns(pytester):
@@ -535,14 +535,14 @@ def _run_export_docs_without_collect_only(pytester, format_: str):
 
 
 @readable(
-    intention_en="Ensures --readable-lang=es renders the summary header in Spanish.",
-    steps_en=[
-        "Create a temporary test",
-        "Run pytest collect-only with readable output and Spanish language",
-        "Verify that 'Resumen legible' appears",
+    intention_es="Verifica que --readable-lang=es renderiza el encabezado del resumen en español.",
+    steps_es=[
+        "Crea una prueba temporal",
+        "Ejecuta pytest en modo collect-only con salida readable y lenguaje español",
+        "Verifica que aparezca 'Resumen legible'",
     ],
-    criteria_en=[
-        "The summary header is rendered in Spanish",
+    criteria_es=[
+        "El encabezado del resumen se renderiza en español",
     ],
 )
 @pytest.mark.es_lang_only
@@ -565,14 +565,14 @@ def test_plugin_honors_readable_lang_es(pytester):
 
 
 @readable(
-    intention="Ensures --readable-lang=en keeps the readable summary header in English.",
+    intention="Verifica que --readable-lang=en mantiene el encabezado del resumen legible en inglés.",
     steps=[
-        "Crea un test temporal",
-        "Ejecuta pytest collect-only con readable y lenguaje inglés",
-        "Verifica que aparezca 'Readable summary'",
+        "Create a temporary test",
+        "Run pytest collect-only with readable and English language",
+        "Verify that 'Readable summary' appears",
     ],
     criteria=[
-        "El encabezado del resumen se renderiza en inglés",
+        "The summary header is rendered in English",
     ],
 )
 @pytest.mark.en_lang_only
@@ -635,14 +635,14 @@ def test_plugin_auto_lang_detects_language_from_decorator_content_en(pytester):
 
 
 @readable(
-    intention="Si un test no tiene metadata readable, el arbol usa el nombre normalizado de la funcion.",
+    intention="Whether a test without readable metadata uses the normalized function name in the tree.",
     steps=[
-        "Crea un test sin metadata decorada",
-        "Ejecuta collect-only con arbol readable",
-        "Verifica que el arbol imprima el nombre derivado de la funcion",
+        "Create a test without decorated metadata",
+        "Run collect-only with the readable tree",
+        "Verify that the tree prints the name derived from the function",
     ],
     criteria=[
-        "El arbol usa el nombre de funcion normalizado cuando no hay metadata",
+        "The tree uses the normalized function name when there is no metadata",
     ],
 )
 def test_plugin_tree_without_readable_uses_function_name(pytester):
@@ -664,14 +664,14 @@ def test_plugin_tree_without_readable_uses_function_name(pytester):
 
 
 @readable(
-    intention="Si el resumen detallado en auto conserva labels y estado del caso en español.",
+    intention="Whether the auto detailed summary keeps labels and status for the Spanish case.",
     steps=[
-        "Crea dos pruebas temporales con readable, una en español y otra en ingles",
-        "Ejecuta pytest collect-only con readable-lang=auto e include-steps",
-        "Verifica que el caso en español use sus labels y estado en español",
+        "Create two temporary tests with readable metadata, one in Spanish and one in English",
+        "Run pytest collect-only with readable-lang=auto and include-steps",
+        "Verify that the Spanish case uses its labels and status in Spanish",
     ],
     criteria=[
-        "El caso en español usa labels y estado en español",
+        "The Spanish case uses labels and status in Spanish",
     ],
 )
 @pytest.mark.auto_lang_only
@@ -683,14 +683,14 @@ def test_plugin_applies_case_language_strategy_in_detailed_list_es(pytester):
 
 
 @readable(
-    intention_en="Ensures auto detailed summary keeps labels and status for the English case.",
-    steps_en=[
-        "Create two temporary tests with readable metadata in Spanish and English",
-        "Run pytest collect-only with readable-lang=auto and include-steps",
-        "Verify that the English case uses labels and status in English",
+    intention_es="Verifica que el resumen detallado automático conserva las etiquetas y el estado para el caso en inglés.",
+    steps_es=[
+        "Crea dos pruebas temporales con metadata readable en español e inglés",
+        "Ejecuta pytest en modo collect-only con readable-lang=auto e include-steps",
+        "Verifica que el caso en inglés use sus etiquetas y estado en inglés",
     ],
-    criteria_en=[
-        "The English case uses labels and status in English",
+    criteria_es=[
+        "El caso en inglés usa etiquetas y estado en inglés",
     ],
 )
 @pytest.mark.auto_lang_only
@@ -735,14 +735,14 @@ def _run_case_language_strategy(pytester):
 
 
 @readable(
-    intention="Si readable-lang=en fuerza etiquetas y metadata en inglés aunque el decorator tenga contenido en español.",
+    intention="Whether readable-lang=en forces labels and metadata into English even when the decorator contains Spanish content.",
     steps=[
-        "Crea un test temporal con metadata readable en español",
-        "Ejecuta pytest collect-only con readable-lang=en e include-steps",
-        "Verifica que status, etiquetas y contenido se rendericen en inglés",
+        "Create a temporary test with readable metadata in Spanish",
+        "Run pytest collect-only with readable-lang=en and include-steps",
+        "Verify that the status, labels, and content are rendered in English",
     ],
     criteria=[
-        "La salida usa etiquetas y contenido en inglés a pesar de que la metadata original está en español",
+        "The output uses English labels and content even though the original metadata is in Spanish",
     ],
 )
 def test_plugin_forced_lang_overrides_case_detection(pytester):
@@ -781,14 +781,14 @@ def test_plugin_forced_lang_overrides_case_detection(pytester):
 
 
 @readable(
-    intention="Si readable-lang=es fuerza etiquetas y metadata en español aunque el decorator tenga contenido en inglés.",
+    intention="Whether readable-lang=es forces labels and metadata into Spanish even when the decorator contains English content.",
     steps=[
-        "Crea un test temporal con metadata readable en inglés",
-        "Ejecuta pytest collect-only con readable-lang=es e include-steps",
-        "Verifica que status, etiquetas y contenido se rendericen en español",
+        "Create a temporary test with readable metadata in English",
+        "Run pytest collect-only with readable-lang=es and include-steps",
+        "Verify that the status, labels, and content are rendered in Spanish",
     ],
     criteria=[
-        "La salida usa etiquetas y contenido en español aunque la metadata original esté en inglés",
+        "The output uses Spanish labels and content even though the original metadata is in English",
     ],
 )
 def test_plugin_forced_lang_overrides_case_detection_es(pytester):
@@ -827,14 +827,14 @@ def test_plugin_forced_lang_overrides_case_detection_es(pytester):
 
 
 @readable(
-    intention="Si el plugin aplica color amarillo a lineas de intencion en ambos idiomas.",
+    intention="Whether the plugin applies yellow color to intention lines in both languages.",
     steps=[
-        "Crea instancia del plugin runtime",
-        "Evalua estilo para linea en español y linea en ingles",
-        "Verifica que ambas devuelvan color amarillo",
+        "Create a runtime plugin instance",
+        "Evaluate the style for a Spanish line and an English line",
+        "Verify that both return yellow coloring",
     ],
     criteria=[
-        "Si \"Qué prueba\" está pintada de color amarillo en salida ANSI",
+        "\"What it tests\" is colored yellow in ANSI output",
     ],
 )
 def test_plugin_styles_intention_lines_in_yellow():
@@ -847,14 +847,14 @@ def test_plugin_styles_intention_lines_in_yellow():
 
 
 @readable(
-    intention="Si el reporte de plugin pinta en azul el encabezado de criterios en salida ANSI.",
+    intention="Whether the plugin report colors the criteria header blue in ANSI output.",
     steps=[
-        "Crea un test temporal con metadata de criterios",
-        "Ejecuta pytest collect-only con readable y color forzado",
-        "Verifica que la linea de criterios salga con codigo ANSI azul",
+        "Create a temporary test with criteria metadata",
+        "Run pytest collect-only with readable and forced color",
+        "Verify that the criteria line is printed with the blue ANSI code",
     ],
     criteria=[
-        "La salida contiene \"Condiciones para aprobar\" con secuencia ANSI de color azul",
+        "The output contains \"Pass conditions\" with a blue ANSI sequence",
     ],
 )
 def test_plugin_reports_criteria_header_in_blue(pytester):
