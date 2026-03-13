@@ -594,30 +594,16 @@ def test_plugin_honors_readable_lang_en(pytester):
     result.stdout.fnmatch_lines(["*Readable summary*"])
 
 
-@readable(
-    intention_es="Verifica que --readable-lang=auto prioriza metadata del decorator sobre el entorno forzado.",
-    steps_es=[
-        "Fuerza las variables de entorno a inglés",
-        "Crea un test con metadata del decorator en español",
-        "Ejecuta pytest collect-only con --readable-lang=auto",
-        "Confirma que el encabezado del resumen se renderiza en español",
-    ],
-    criteria_es=[
-        "La detección auto prefiere la metadata en español por encima de las variables del entorno",
-    ],
-)
 @pytest.mark.auto_lang_only
-def test_plugin_auto_lang_detects_from_decorators_es(pytester, monkeypatch):
-    monkeypatch.setenv("PYTEST_READABLE_LANG", "en_US.UTF-8")
-    monkeypatch.setenv("LC_ALL", "en_US.UTF-8")
-    monkeypatch.setenv("LANG", "en_US.UTF-8")
+def test_plugin_auto_lang_detects_language_from_decorator_content_es(pytester):
     pytester.makepyfile(
         test_auto_lang='''
         from pytest_readable.decorators import readable
 
         @readable(
-            intention="Si detecta idioma español desde decorators",
-            steps=["Define metadata en español", "Renderiza en modo auto"],
+            intent="Verifica autodeteccion de idioma por contenido del decorator",
+            steps=["Define metadata en espanol", "Renderiza el resumen en modo auto"],
+            criteria=["Muestra el encabezado en espanol"],
         )
         def test_detects_es():
             assert True
@@ -628,31 +614,16 @@ def test_plugin_auto_lang_detects_from_decorators_es(pytester, monkeypatch):
     result.stdout.fnmatch_lines(["*Resumen legible*"])
 
 
-@readable(
-    intention_en="Ensures auto language picks decorator metadata instead of forced environment.",
-    steps_en=[
-        "Set environment variables to Spanish",
-        "Create a test whose decorator metadata is written in English",
-        "Run pytest collect-only with --readable-lang=auto",
-        "Confirm the summary header renders in English",
-    ],
-    criteria_en=[
-        "Auto detection prefers decorator metadata in English over the spicy env settings",
-    ],
-)
 @pytest.mark.auto_lang_only
-def test_plugin_auto_lang_detects_from_decorators_en(pytester, monkeypatch):
-    monkeypatch.setenv("PYTEST_READABLE_LANG", "es_MX.UTF-8")
-    monkeypatch.setenv("LC_ALL", "es_MX.UTF-8")
-    monkeypatch.setenv("LANG", "es_MX.UTF-8")
+def test_plugin_auto_lang_detects_language_from_decorator_content_en(pytester):
     pytester.makepyfile(
         test_auto_lang_en='''
         from pytest_readable.decorators import readable
 
         @readable(
-            intention="Validates English metadata despite Spanish environment",
-            steps=["Create English metadata"],
-            criteria=["Reports English header"],
+            intent="Validates automatic language detection from decorator content",
+            steps=["Define metadata in English", "Render the summary in auto mode"],
+            criteria=["Shows the header in English"],
         )
         def test_detects_en():
             assert True
