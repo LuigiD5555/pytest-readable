@@ -8,6 +8,12 @@
 
 It is useful when you want pytest output to be easier to review, easier to share with non-developers, and easier to reuse as lightweight test documentation.
 
+## The problem it solves
+
+When AI generates your test suite, you end up with 200 tests that pass and no practical way to know if they're testing the right things without reading each one individually.
+
+`pytest-readable` forces explicit intent at the point of writing. Just add a decorator no extra calls, no configuration, no framework to learn and it surfaces intent, steps, and pass conditions in one readable summary so you can audit at a glance instead of diving into code.
+
 ## Installation
 
 ```bash
