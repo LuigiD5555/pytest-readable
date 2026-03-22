@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from pytest_readable.core.models import ReadableSuite, ReadableTestCase
+from pytest_readable.core.path_strategies import AutoPathStrategy, CurrentWorkingDirectoryPathStrategy, PathResolutionStrategy, ProjectRootPathStrategy
 from pytest_readable.i18n import I18n
 
 
@@ -360,8 +361,17 @@ def build_suite_from_items(
     rootdir: Path,
     i18n: I18n,
     preserve_case_language: bool = False,
+    path_strategy: PathResolutionStrategy | None = None,
 ) -> ReadableSuite:
-    """Build a readable suite model that mirrors pytest's collected order."""
+    """Build a readable suite model that mirrors pytest's collected order.
+
+    :param path_strategy: Controls how file paths are displayed. Defaults to
+        ``AutoPathStrategy`` (cwd first, project root as fallback).
+    """
+    resolved_strategy: PathResolutionStrategy = path_strategy or AutoPathStrategy(
+        cwd_strategy=CurrentWorkingDirectoryPathStrategy(Path.cwd()),
+        root_strategy=ProjectRootPathStrategy(rootdir),
+    )
     cases: list[ReadableTestCase] = []
     for item in items:
         path = Path(str(getattr(item, "path", ""))).resolve()
@@ -380,7 +390,10 @@ def build_suite_from_items(
         steps = _pick_steps_from_metadata(metadata, case_language)
         criteria = _pick_criteria_from_metadata(metadata, case_language)
 
-        module_path = str(path.relative_to(rootdir)) if path.is_relative_to(rootdir) else str(path)
+        try:
+            module_path = resolved_strategy.resolve_display_path(path)
+        except Exception:
+            module_path = str(path)
 
         cases.append(
             ReadableTestCase(

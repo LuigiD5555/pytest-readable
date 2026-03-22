@@ -7,6 +7,7 @@
 from pathlib import Path
 
 from pytest_readable.core.parser import build_suite_from_items, detect_language_from_decorators
+from pytest_readable.core.path_strategies import PathStrategyFactory
 from pytest_readable.core.renderer import render_summary_text, render_tree_text
 from pytest_readable.core.services import export_suite
 from pytest_readable.i18n import get_i18n
@@ -119,11 +120,17 @@ class ReadableRuntimePlugin:
                 preferred_lang = detected
 
         self.i18n = get_i18n(preferred_lang)
+        project_root = Path(self.config.rootpath)
+        path_mode = self.config.getoption("readable_path_mode")
+        base_path = self.config.getoption("readable_base_path") or None
+        factory = PathStrategyFactory(project_root=project_root, cwd=Path.cwd())
+        path_strategy = factory.build(path_mode, base_path=base_path)
         self.suite = build_suite_from_items(
             items,
-            Path(self.config.rootpath),
+            project_root,
             self.i18n,
             preserve_case_language=requested_lang == "auto",
+            path_strategy=path_strategy,
         )
 
     def _get_export_format(self) -> str | None:
@@ -228,11 +235,13 @@ class ReadableRuntimePlugin:
             status = STATUS_MAP.get(report.outcome, report.outcome)
         elif report.when == "setup" and report.skipped:
             status = "skipped"
+        elif report.when == "setup" and report.failed:
+            status = "error"
         else:
             return
 
         for case in self.suite.cases:
-            if case.nodeid == report.nodeid:
+            if case.nodeid == report.nodeid or case.nodeid.endswith(report.nodeid) or report.nodeid.endswith(case.nodeid):
                 case.status = status
                 break
 
@@ -336,6 +345,28 @@ def pytest_addoption(parser):
         choices=["markdown", "csv"],
         default=None,
         help="Shortcut for --readable-docs and --readable-format=FORMAT",
+    )
+    group.addoption(
+        "--path-mode",
+        dest="readable_path_mode",
+        action="store",
+        choices=["auto", "root", "cwd", "explicit"],
+        default="auto",
+        help=(
+            "How readable resolves display paths: "
+            "'auto' uses cwd and falls back to project root (default), "
+            "'root' always uses the project root, "
+            "'cwd' uses the current working directory, "
+            "'explicit' uses --base-path."
+        ),
+    )
+    group.addoption(
+        "--base-path",
+        dest="readable_base_path",
+        action="store",
+        default="",
+        metavar="PATH",
+        help="Explicit base path for display paths when --path-mode=explicit.",
     )
 
 

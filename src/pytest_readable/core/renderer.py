@@ -61,15 +61,18 @@ def render_summary_text(
                 else:
                     lines.append(f"      1. {case_pack.missing_criteria_label}")
 
-    lines.append("")
-    lines.append(
-        summary_pack.final_summary_template.format(
-            total=counts.get("total", 0),
-            passed=counts.get("passed", 0),
-            failed=counts.get("failed", 0),
-            skipped=counts.get("skipped", 0),
-        )
+    error_count = counts.get("error", 0)
+    final_summary = summary_pack.final_summary_template.format(
+        total=counts.get("total", 0),
+        passed=counts.get("passed", 0),
+        failed=counts.get("failed", 0),
+        skipped=counts.get("skipped", 0),
     )
+    if error_count:
+        error_label = _status_label("error", summary_pack.code)
+        final_summary += f", {error_label}={error_count}"
+    lines.append("")
+    lines.append(final_summary)
 
     return "\n".join(lines).rstrip()
 

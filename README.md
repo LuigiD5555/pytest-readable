@@ -194,6 +194,25 @@ It does not aim to become:
 - an AI interpreter
 - a writable test authoring tool
 
+## Path Resolution
+
+`pytest-readable` now supports nested repository layouts.
+
+By default, readable paths are resolved in `auto` mode:
+
+- first against the current working directory
+- then against the project root if the file is outside `cwd`
+
+You can override that behavior when needed:
+
+```bash
+pytest --readable --path-mode=root
+pytest --readable --path-mode=cwd
+pytest --readable --path-mode=explicit --base-path=src
+```
+
+Use `root` when you want paths relative to the repository root, `cwd` when you run tests from a subproject, and `explicit` when you want to pin the display base path manually.
+
 ## CLI Helper
 
 The package also installs a small `readable` helper command that forwards to pytest with readable defaults:

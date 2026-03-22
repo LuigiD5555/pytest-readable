@@ -39,7 +39,7 @@ def _print_wrapped_output(stdout_text: str, stderr_text: str, returncode: int) -
     """Dump the most relevant pytest summaries to stdout/stderr while honoring returncode."""
     chunks: list[str] = []
     if returncode != 0:
-        for title in ("FAILURES", "warnings summary", "short test summary info"):
+        for title in ("ERRORS", "FAILURES", "warnings summary", "short test summary info"):
             section = _extract_report_section(stdout_text, title)
             if section:
                 chunks.append(section)

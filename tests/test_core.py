@@ -3,6 +3,7 @@ import subprocess
 from gettext import GNUTranslations
 from pathlib import Path
 
+import pytest
 import pytest_readable.cli as cli
 from pytest_readable.compile_locales import compile_po_file
 from pytest_readable.core.exporters import render_csv
@@ -11,6 +12,14 @@ from pytest_readable.core.parser import (
     detect_language_from_decorators,
     find_tests_without_readable,
     parse_decorated_spec_file,
+)
+from pytest_readable.core.path_strategies import (
+    AutoPathStrategy,
+    CurrentWorkingDirectoryPathStrategy,
+    ExplicitBasePathStrategy,
+    PathResolutionError,
+    PathStrategyFactory,
+    ProjectRootPathStrategy,
 )
 from pytest_readable.core.renderer import (
     parse_pytest_output,
@@ -425,6 +434,87 @@ def test_render_summary_text_spanish_renders_steps_and_criteria():
 
 
 @readable(
+    intention="Whether render_summary_text includes error counts in the final summary.",
+    steps=[
+        "Build an in-memory suite with one passing case and one setup error case",
+        "Run render_summary_text with Spanish language and step inclusion",
+        "Verify that the summary reports the error count",
+    ],
+    criteria=[
+        "The summary reports error counts alongside the other totals",
+    ],
+)
+def test_render_summary_text_spanish_includes_error_counts():
+    text = _render_spanish_summary_with_error()
+    assert "- errores: 1" in text
+    assert "Resumen final: total=2, aprobadas=1, fallidas=0, omitidas=0, errores=1" in text
+
+
+@readable(
+    intention="Whether the readable runtime plugin matches shortened report nodeids to full case nodeids.",
+    steps=[
+        "Build a plugin instance with a documented suite",
+        "Send a setup-failed report with a shortened nodeid",
+        "Verify that the matching case is marked as an error",
+    ],
+    criteria=[
+        "The plugin matches suffix nodeids and marks the case as error",
+    ],
+)
+def test_readable_runtime_plugin_matches_suffix_nodeids_for_setup_errors():
+    from types import SimpleNamespace
+
+    from pytest_readable.plugin import ReadableRuntimePlugin
+
+    class FakeConfig:
+        rootpath = Path(".")
+        option = SimpleNamespace(verbose=0)
+        pluginmanager = SimpleNamespace(get_plugin=lambda _name: None)
+
+        def getoption(self, name):
+            options = {
+                "readable": True,
+                "readable_detailed": False,
+                "readable_verbose": False,
+                "readable_tree": False,
+                "readable_docs": False,
+                "readable_export": None,
+                "readable_path_mode": "auto",
+                "readable_base_path": "",
+                "readable_lang": "auto",
+            }
+            return options.get(name)
+
+    plugin = ReadableRuntimePlugin(FakeConfig())
+    plugin.suite = ReadableSuite(
+        rootdir=Path("."),
+        language="es",
+        cases=[
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_setup_error",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_setup_error",
+                display_name="setup error",
+                status="collected",
+            )
+        ],
+    )
+    plugin.i18n = get_i18n("es")
+
+    report = SimpleNamespace(
+        when="setup",
+        failed=True,
+        skipped=False,
+        outcome="failed",
+        nodeid="test_demo.py::test_setup_error",
+    )
+    plugin.pytest_runtest_logreport(report)
+
+    assert plugin.suite.cases[0].status == "error"
+
+
+@readable(
     intention="Whether render_summary_text preserves language-specific labels for Spanish and English cases.",
     steps=[
         "Build a suite with one case in Spanish and another in English",
@@ -516,6 +606,34 @@ def _render_spanish_detailed_summary() -> str:
                 criteria=["Retorna estado aprobado", "No lanza excepciones"],
                 status="passed",
             )
+        ],
+    )
+    return render_summary_text(suite, "es", include_steps=True)
+
+
+def _render_spanish_summary_with_error() -> str:
+    suite = ReadableSuite(
+        rootdir=Path("."),
+        language="es",
+        cases=[
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_ok",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_ok",
+                display_name="ok",
+                what="Valida caso correcto",
+                status="passed",
+            ),
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_setup_error",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_setup_error",
+                display_name="setup error",
+                what="Falla durante setup",
+                status="error",
+            ),
         ],
     )
     return render_summary_text(suite, "es", include_steps=True)
@@ -1161,3 +1279,300 @@ Lista legible
 
     cli._print_wrapped_output(output, "", 1)
     return capsys.readouterr().out
+
+
+@readable(
+    intention="Whether the readable wrapper prioritizes ERRORS before FAILURES when filtering output.",
+    steps=[
+        "Stub the section extractor to return synthetic errors and failures",
+        "Run the CLI filtered printer",
+        "Verify that ERRORS is requested and printed before FAILURES",
+    ],
+    criteria=[
+        "The ERRORS section is included before FAILURES",
+    ],
+)
+def test_cli_prints_errors_before_failures_when_pytest_fails(monkeypatch, capsys):
+    requested_titles: list[str] = []
+
+    def fake_extract_report_section(text: str, title: str) -> str:
+        requested_titles.append(title)
+        if title == "ERRORS":
+            return "ERRORS\n"
+        if title == "FAILURES":
+            return "FAILURES\n"
+        return ""
+
+    monkeypatch.setattr(cli, "_extract_report_section", fake_extract_report_section)
+
+    cli._print_wrapped_output("ignored", "", 1)
+    rendered = capsys.readouterr().out
+
+    assert requested_titles[:2] == ["ERRORS", "FAILURES"]
+    assert rendered == "ERRORS\nFAILURES\n"
+
+
+# ---------------------------------------------------------------------------
+# Path resolution strategies
+# ---------------------------------------------------------------------------
+
+
+@readable(
+    intention="Whether ProjectRootPathStrategy resolves a path inside the root correctly.",
+    steps=[
+        "Create a temporary directory as project root",
+        "Build a file path inside that root",
+        "Call resolve_display_path",
+        "Verify the result is relative to the root",
+    ],
+    criteria=["The resolved path is relative to the project root"],
+)
+def test_project_root_strategy_resolves_path_inside_root(tmp_path):
+    strategy = ProjectRootPathStrategy(tmp_path)
+    file_path = tmp_path / "tokens" / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "tokens/tests.py"
+
+
+@readable(
+    intention="Whether ProjectRootPathStrategy raises PathResolutionError for a file outside the root.",
+    steps=[
+        "Create a temporary directory as project root",
+        "Build a file path outside that root",
+        "Call resolve_display_path and expect an error",
+    ],
+    criteria=["PathResolutionError is raised when the file is outside the root"],
+)
+def test_project_root_strategy_raises_for_path_outside_root(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    outside = tmp_path / "other" / "tests.py"
+    strategy = ProjectRootPathStrategy(root)
+    with pytest.raises(PathResolutionError):
+        strategy.resolve_display_path(outside)
+
+
+@readable(
+    intention="Whether ProjectRootPathStrategy rejects a relative root path.",
+    steps=[
+        "Instantiate ProjectRootPathStrategy with a relative path",
+        "Expect ValueError",
+    ],
+    criteria=["ValueError is raised when project_root is not absolute"],
+)
+def test_project_root_strategy_rejects_relative_root():
+    with pytest.raises(ValueError, match="absolute"):
+        ProjectRootPathStrategy(Path("relative/path"))
+
+
+@readable(
+    intention="Whether CurrentWorkingDirectoryPathStrategy resolves a path inside cwd.",
+    steps=[
+        "Create a temporary directory as cwd",
+        "Build a file path inside that cwd",
+        "Call resolve_display_path",
+        "Verify the result is relative to cwd",
+    ],
+    criteria=["The resolved path is relative to cwd"],
+)
+def test_cwd_strategy_resolves_path_inside_cwd(tmp_path):
+    strategy = CurrentWorkingDirectoryPathStrategy(tmp_path)
+    file_path = tmp_path / "payments" / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "payments/tests.py"
+
+
+@readable(
+    intention="Whether CurrentWorkingDirectoryPathStrategy raises PathResolutionError for a file outside cwd.",
+    steps=[
+        "Create a temporary directory as cwd",
+        "Build a file path outside that cwd",
+        "Call resolve_display_path and expect an error",
+    ],
+    criteria=["PathResolutionError is raised when the file is outside cwd"],
+)
+def test_cwd_strategy_raises_for_path_outside_cwd(tmp_path):
+    cwd = tmp_path / "subproject"
+    cwd.mkdir()
+    outside = tmp_path / "other" / "tests.py"
+    strategy = CurrentWorkingDirectoryPathStrategy(cwd)
+    with pytest.raises(PathResolutionError):
+        strategy.resolve_display_path(outside)
+
+
+@readable(
+    intention="Whether ExplicitBasePathStrategy resolves a path inside the explicit base.",
+    steps=[
+        "Create a temporary directory as explicit base",
+        "Build a file path inside that base",
+        "Call resolve_display_path",
+        "Verify the result is relative to the explicit base",
+    ],
+    criteria=["The resolved path is relative to the explicit base path"],
+)
+def test_explicit_strategy_resolves_path_inside_base(tmp_path):
+    base = tmp_path / "tokens"
+    strategy = ExplicitBasePathStrategy(base)
+    file_path = base / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "tests.py"
+
+
+@readable(
+    intention="Whether ExplicitBasePathStrategy raises PathResolutionError for a file outside the base.",
+    steps=[
+        "Create a temporary directory as explicit base",
+        "Build a file path outside that base",
+        "Call resolve_display_path and expect an error",
+    ],
+    criteria=["PathResolutionError is raised when the file is outside the explicit base"],
+)
+def test_explicit_strategy_raises_for_path_outside_base(tmp_path):
+    base = tmp_path / "tokens"
+    outside = tmp_path / "payments" / "tests.py"
+    strategy = ExplicitBasePathStrategy(base)
+    with pytest.raises(PathResolutionError):
+        strategy.resolve_display_path(outside)
+
+
+@readable(
+    intention="Whether AutoPathStrategy uses cwd when the file is inside cwd.",
+    steps=[
+        "Create a temporary directory with a cwd subdirectory and a root directory",
+        "Build a file path inside cwd",
+        "Call resolve_display_path",
+        "Verify the result is relative to cwd",
+    ],
+    criteria=["AutoPathStrategy returns a cwd-relative path when the file is inside cwd"],
+)
+def test_auto_strategy_prefers_cwd_when_file_is_inside_cwd(tmp_path):
+    root = tmp_path / "project"
+    cwd = root / "tokens"
+    strategy = AutoPathStrategy(
+        cwd_strategy=CurrentWorkingDirectoryPathStrategy(cwd),
+        root_strategy=ProjectRootPathStrategy(root),
+    )
+    file_path = cwd / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "tests.py"
+
+
+@readable(
+    intention="Whether AutoPathStrategy falls back to project root when the file is outside cwd.",
+    steps=[
+        "Create a temporary directory with root and two sibling subdirectories",
+        "Position cwd in one subdirectory and file in the other",
+        "Call resolve_display_path",
+        "Verify the result is relative to the project root",
+    ],
+    criteria=["AutoPathStrategy falls back to root-relative path when the file is outside cwd"],
+)
+def test_auto_strategy_falls_back_to_root_when_file_is_outside_cwd(tmp_path):
+    root = tmp_path / "project"
+    cwd = root / "tokens"
+    strategy = AutoPathStrategy(
+        cwd_strategy=CurrentWorkingDirectoryPathStrategy(cwd),
+        root_strategy=ProjectRootPathStrategy(root),
+    )
+    file_path = root / "payments" / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "payments/tests.py"
+
+
+@readable(
+    intention="Whether PathStrategyFactory builds a ProjectRootPathStrategy for mode 'root'.",
+    steps=[
+        "Create a factory with a temporary root and cwd",
+        "Call build with path_mode='root'",
+        "Verify the returned strategy resolves relative to root",
+    ],
+    criteria=["Factory returns a root-relative strategy for mode 'root'"],
+)
+def test_factory_builds_root_strategy(tmp_path):
+    root = tmp_path / "project"
+    cwd = root / "tokens"
+    factory = PathStrategyFactory(project_root=root, cwd=cwd)
+    strategy = factory.build("root")
+    file_path = root / "payments" / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "payments/tests.py"
+
+
+@readable(
+    intention="Whether PathStrategyFactory builds a CurrentWorkingDirectoryPathStrategy for mode 'cwd'.",
+    steps=[
+        "Create a factory with a temporary root and cwd",
+        "Call build with path_mode='cwd'",
+        "Verify the returned strategy resolves relative to cwd",
+    ],
+    criteria=["Factory returns a cwd-relative strategy for mode 'cwd'"],
+)
+def test_factory_builds_cwd_strategy(tmp_path):
+    root = tmp_path / "project"
+    cwd = root / "tokens"
+    factory = PathStrategyFactory(project_root=root, cwd=cwd)
+    strategy = factory.build("cwd")
+    file_path = cwd / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "tests.py"
+
+
+@readable(
+    intention="Whether PathStrategyFactory builds an AutoPathStrategy for mode 'auto'.",
+    steps=[
+        "Create a factory with a temporary root and cwd",
+        "Call build with path_mode='auto'",
+        "Verify the strategy uses cwd when possible and falls back to root",
+    ],
+    criteria=["Factory returns an auto strategy that prefers cwd and falls back to root"],
+)
+def test_factory_builds_auto_strategy(tmp_path):
+    root = tmp_path / "project"
+    cwd = root / "tokens"
+    factory = PathStrategyFactory(project_root=root, cwd=cwd)
+    strategy = factory.build("auto")
+    inside_cwd = cwd / "tests.py"
+    outside_cwd = root / "payments" / "tests.py"
+    assert strategy.resolve_display_path(inside_cwd) == "tests.py"
+    assert strategy.resolve_display_path(outside_cwd) == "payments/tests.py"
+
+
+@readable(
+    intention="Whether PathStrategyFactory builds an ExplicitBasePathStrategy for mode 'explicit'.",
+    steps=[
+        "Create a factory with a temporary root and cwd",
+        "Call build with path_mode='explicit' and a base_path",
+        "Verify the strategy resolves relative to the given base path",
+    ],
+    criteria=["Factory returns an explicit-base strategy when path_mode='explicit' and base_path is given"],
+)
+def test_factory_builds_explicit_strategy(tmp_path):
+    root = tmp_path / "project"
+    base = root / "tokens"
+    factory = PathStrategyFactory(project_root=root, cwd=root)
+    strategy = factory.build("explicit", base_path=str(base))
+    file_path = base / "tests.py"
+    assert strategy.resolve_display_path(file_path) == "tests.py"
+
+
+@readable(
+    intention="Whether PathStrategyFactory raises ValueError when 'explicit' mode is used without base_path.",
+    steps=[
+        "Create a factory",
+        "Call build with path_mode='explicit' and no base_path",
+        "Expect ValueError",
+    ],
+    criteria=["ValueError is raised when explicit mode is missing base_path"],
+)
+def test_factory_raises_when_explicit_mode_has_no_base_path(tmp_path):
+    factory = PathStrategyFactory(project_root=tmp_path, cwd=tmp_path)
+    with pytest.raises(ValueError, match="base_path"):
+        factory.build("explicit")
+
+
+@readable(
+    intention="Whether PathStrategyFactory raises ValueError for an unsupported path_mode.",
+    steps=[
+        "Create a factory",
+        "Call build with an unknown path_mode",
+        "Expect ValueError",
+    ],
+    criteria=["ValueError is raised for unsupported path_mode values"],
+)
+def test_factory_raises_for_unsupported_path_mode(tmp_path):
+    factory = PathStrategyFactory(project_root=tmp_path, cwd=tmp_path)
+    with pytest.raises(ValueError, match="Unsupported path_mode"):
+        factory.build("unknown")
