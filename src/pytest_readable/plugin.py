@@ -282,10 +282,20 @@ class ReadableRuntimePlugin:
         else:
             return
 
+        error_message = ""
+        if status in {"error", "failed"} and report.longrepr:
+            longrepr = report.longrepr
+            if hasattr(longrepr, "reprcrash") and longrepr.reprcrash:
+                error_message = longrepr.reprcrash.message
+            elif isinstance(longrepr, str):
+                error_message = longrepr.strip().splitlines()[-1] if longrepr.strip() else ""
+
         for case in self.suite.cases:
             nid = report.nodeid
             if case.nodeid == nid or case.nodeid.endswith(nid) or nid.endswith(case.nodeid):
                 case.status = status
+                if error_message:
+                    case.error_message = error_message
                 break
 
     def pytest_report_teststatus(self, report, config):
