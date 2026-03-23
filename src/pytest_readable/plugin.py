@@ -283,7 +283,8 @@ class ReadableRuntimePlugin:
             return
 
         for case in self.suite.cases:
-            if case.nodeid == report.nodeid or case.nodeid.endswith(report.nodeid) or report.nodeid.endswith(case.nodeid):
+            nid = report.nodeid
+            if case.nodeid == nid or case.nodeid.endswith(nid) or nid.endswith(case.nodeid):
                 case.status = status
                 break
 
@@ -329,9 +330,10 @@ class ReadableRuntimePlugin:
             self.suite.deselected = self._deselected_count
             self.suite.warnings = self._warning_count
 
-        if self.suite is not None and not self.config.getoption("collectonly") and self._suppress_native_pytest_output():
-            self._print_to_terminal(terminal_reporter, self._render_summary())
+        suppress = self._suppress_native_pytest_output()
+        if self.suite is not None and not self.config.getoption("collectonly") and suppress:
             self._print_error_summary(terminal_reporter)
+            self._print_to_terminal(terminal_reporter, self._render_summary())
 
         self._export_if_requested(terminal_reporter)
 
