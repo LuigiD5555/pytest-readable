@@ -217,6 +217,42 @@ def test_readable_prints_summary_reports_passed_outcome(pytester):
     assert "- passed: 1" in result.stdout.str()
 
 
+@readable(
+    intention="Whether readable still prints pytest's failure and error sections when tests fail.",
+    steps=[
+        "Create one failing test and one test with a fixture error",
+        "Run pytest with readable and readable-lang=en",
+        "Verify that pytest prints both FAILURES and ERRORS sections",
+    ],
+    criteria=[
+        "The output includes both failure and error sections",
+    ],
+)
+def test_readable_prints_native_failure_and_error_sections(pytester):
+    pytester.makepyfile(
+        test_broken="""
+        import pytest
+
+        @pytest.fixture
+        def broken_fixture():
+            raise RuntimeError("boom")
+
+        def test_failing_case():
+            assert False
+
+        def test_error_case(broken_fixture):
+            del broken_fixture
+        """
+    )
+
+    result = pytester.runpytest("--readable", "--readable-lang=en")
+    stdout = result.stdout.str()
+    assert result.ret == 1
+    assert "short test summary info" in stdout
+    assert "test_failing_case - assert False" in stdout
+    assert "test_error_case - RuntimeError: boom" in stdout
+
+
 def _run_readable_summary(pytester, *extra_args: str):
     pytester.makepyfile(
         test_sample="""

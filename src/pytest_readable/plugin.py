@@ -211,6 +211,24 @@ class ReadableRuntimePlugin:
         terminal_reporter.write_line(f"readable docs exported: {written}")
         self._export_done = True
 
+    def _print_error_summary(self, terminal_reporter) -> None:
+        """Print the short test summary info section when there are errors or failures."""
+        has_errors = bool(terminal_reporter.stats.get("error"))
+        has_failures = bool(terminal_reporter.stats.get("failed"))
+        if not has_errors and not has_failures:
+            return
+        chars_needed = ""
+        if has_errors:
+            chars_needed += "E"
+        if has_failures:
+            chars_needed += "f"
+        original_reportchars = terminal_reporter.reportchars
+        terminal_reporter.reportchars = chars_needed
+        try:
+            terminal_reporter.short_test_summary()
+        finally:
+            terminal_reporter.reportchars = original_reportchars
+
     def pytest_collection_finish(self, session):
         """Build the readable suite after collection and optionally render during `--collect-only`."""
         if not self._enabled():
@@ -313,6 +331,7 @@ class ReadableRuntimePlugin:
 
         if self.suite is not None and not self.config.getoption("collectonly") and self._suppress_native_pytest_output():
             self._print_to_terminal(terminal_reporter, self._render_summary())
+            self._print_error_summary(terminal_reporter)
 
         self._export_if_requested(terminal_reporter)
 
