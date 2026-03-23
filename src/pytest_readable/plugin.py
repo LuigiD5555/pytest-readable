@@ -18,6 +18,8 @@ STATUS_MAP = {
     "passed": "passed",
     "failed": "failed",
     "skipped": "skipped",
+    "xfailed": "xfailed",
+    "xpassed": "xpassed",
 }
 
 
@@ -31,6 +33,8 @@ class ReadableRuntimePlugin:
         self.i18n = None
         self.rendered_in_collect_only = False
         self._export_done = False
+        self._deselected_count = 0
+        self._warning_count = 0
 
     def _enabled(self) -> bool:
         """Return True when any readable flag was requested."""
@@ -167,6 +171,14 @@ class ReadableRuntimePlugin:
                 f"- {status_labels['skipped']}:"
             ):
                 return {"yellow": True}
+            if normalized.startswith(f"- [{status_labels['xfailed']}]") or normalized.startswith(
+                f"- {status_labels['xfailed']}:"
+            ):
+                return {"yellow": True}
+            if normalized.startswith(f"- [{status_labels['xpassed']}]") or normalized.startswith(
+                f"- {status_labels['xpassed']}:"
+            ):
+                return {"green": True}
         return {}
 
     def _print_to_terminal(self, terminal_reporter, text: str) -> None:
@@ -226,13 +238,25 @@ class ReadableRuntimePlugin:
             return
         self.config.option.verbose = -2
 
+    def pytest_deselected(self, items):
+        """Track items removed by -k or -m filters."""
+        self._deselected_count += len(items)
+
+    def pytest_warning_recorded(self, warning_message, when, nodeid, location):
+        """Count warnings emitted during the session."""
+        del warning_message, when, nodeid, location
+        self._warning_count += 1
+
     def pytest_runtest_logreport(self, report):
         """Map pytest reports to readable case statuses once each test call finishes."""
         if not self._enabled() or self.suite is None:
             return
 
         if report.when == "call":
-            status = STATUS_MAP.get(report.outcome, report.outcome)
+            if hasattr(report, "wasxfail"):
+                status = "xpassed" if report.outcome == "passed" else "xfailed"
+            else:
+                status = STATUS_MAP.get(report.outcome, report.outcome)
         elif report.when == "setup" and report.skipped:
             status = "skipped"
         elif report.when == "setup" and report.failed:
@@ -282,6 +306,10 @@ class ReadableRuntimePlugin:
 
         if self.suite is None:
             self._ensure_suite(getattr(session, "items", []))
+
+        if self.suite is not None:
+            self.suite.deselected = self._deselected_count
+            self.suite.warnings = self._warning_count
 
         if self.suite is not None and not self.config.getoption("collectonly") and self._suppress_native_pytest_output():
             self._print_to_terminal(terminal_reporter, self._render_summary())

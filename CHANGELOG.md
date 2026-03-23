@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1] - 2026-03-23
+
+- `xfailed` and `xpassed` test outcomes are now tracked and displayed separately in the readable summary.
+- The final summary line now shows `xfailed` and `xpassed` counts between `skipped` and `error`, matching pytest's own ordering.
+- Terminal color for `xfailed` lines is yellow; `xpassed` lines are green.
+- `deselected` items (filtered by `-k` or `-m`) are now counted and shown in the final summary line.
+- Warnings emitted during the session are now counted and shown in the final summary line.
+- When no tests are collected or all are deselected, the summary shows "no tests ran" instead of an empty result line.
+- Added `deselected`, `warnings`, and `no_tests` labels to English and Spanish language packs.
+
 ## [0.2.0] - 2026-03-21
 
 - Added configurable path resolution for nested repositories.

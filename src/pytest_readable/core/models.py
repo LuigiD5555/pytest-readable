@@ -32,6 +32,8 @@ class ReadableSuite:
     rootdir: Path
     language: str
     cases: list[ReadableTestCase] = field(default_factory=list)
+    deselected: int = 0
+    warnings: int = 0
 
     def counts(self) -> dict[str, int]:
         """Return a count of cases by status plus total."""

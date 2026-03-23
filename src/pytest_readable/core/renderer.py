@@ -62,15 +62,39 @@ def render_summary_text(
                     lines.append(f"      1. {case_pack.missing_criteria_label}")
 
     error_count = counts.get("error", 0)
+    xfailed_count = counts.get("xfailed", 0)
+    xpassed_count = counts.get("xpassed", 0)
+    deselected_count = getattr(suite, "deselected", 0)
+    warning_count = getattr(suite, "warnings", 0)
+
+    total_resolved = counts.get("total", 0)
+    if total_resolved == 0:
+        no_tests_label = _status_label("no_tests", summary_pack.code)
+        lines.append("")
+        lines.append(no_tests_label)
+        return "\n".join(lines).rstrip()
+
     final_summary = summary_pack.final_summary_template.format(
         total=counts.get("total", 0),
         passed=counts.get("passed", 0),
         failed=counts.get("failed", 0),
         skipped=counts.get("skipped", 0),
     )
+    if xfailed_count:
+        xfailed_label = _status_label("xfailed", summary_pack.code)
+        final_summary += f", {xfailed_label}={xfailed_count}"
+    if xpassed_count:
+        xpassed_label = _status_label("xpassed", summary_pack.code)
+        final_summary += f", {xpassed_label}={xpassed_count}"
     if error_count:
         error_label = _status_label("error", summary_pack.code)
         final_summary += f", {error_label}={error_count}"
+    if deselected_count:
+        deselected_label = _status_label("deselected", summary_pack.code)
+        final_summary += f", {deselected_label}={deselected_count}"
+    if warning_count:
+        warning_label = _status_label("warnings", summary_pack.code)
+        final_summary += f", {warning_label}={warning_count}"
     lines.append("")
     lines.append(final_summary)
 

@@ -884,3 +884,63 @@ def test_plugin_reports_criteria_header_in_blue(pytester):
     stdout = result.stdout.str()
     assert "Condiciones para aprobar:" in stdout
     assert "\x1b[34m" in stdout
+
+
+@readable(
+    intention="Whether an xfail test is tracked as xfailed and not as skipped.",
+    steps=[
+        "Create a test marked with pytest.mark.xfail that fails as expected",
+        "Run pytest with --readable and --readable-lang=en",
+        "Verify that the final summary shows xfailed=1 and skipped=0",
+    ],
+    criteria=[
+        "The final summary line shows xfailed=1",
+        "skipped does not appear in the final summary",
+    ],
+)
+def test_xfail_outcome_is_tracked_as_xfailed(pytester):
+    pytester.makepyfile(
+        test_xfail="""
+        import pytest
+
+        @pytest.mark.xfail
+        def test_expected_failure():
+            assert False
+        """
+    )
+
+    result = pytester.runpytest("--readable", "--readable-lang=en")
+    stdout = result.stdout.str()
+    assert "xfailed=1" in stdout
+    final_summary = stdout.split("Final summary")[-1]
+    assert "skipped=0" in final_summary
+    assert "xfailed=1" in final_summary
+
+
+@readable(
+    intention="Whether an xpass test is tracked as xpassed and not as passed.",
+    steps=[
+        "Create a test marked with pytest.mark.xfail that passes unexpectedly",
+        "Run pytest with --readable and --readable-lang=en",
+        "Verify that the final summary shows xpassed=1 and passed=0",
+    ],
+    criteria=[
+        "The final summary line shows xpassed=1",
+        "passed=0 appears in the final summary",
+    ],
+)
+def test_xpass_outcome_is_tracked_as_xpassed(pytester):
+    pytester.makepyfile(
+        test_xpass="""
+        import pytest
+
+        @pytest.mark.xfail
+        def test_unexpected_pass():
+            assert True
+        """
+    )
+
+    result = pytester.runpytest("--readable", "--readable-lang=en")
+    stdout = result.stdout.str()
+    assert "xpassed=1" in stdout
+    assert "passed=0" in stdout.split("Final summary")[-1]

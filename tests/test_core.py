@@ -515,6 +515,96 @@ def test_readable_runtime_plugin_matches_suffix_nodeids_for_setup_errors():
 
 
 @readable(
+    intention="Whether render_summary_text includes xfailed, xpassed, deselected, and warning counts in the final summary.",
+    steps=[
+        "Build a suite with passed, failed, skipped, xfailed, and xpassed cases",
+        "Attach deselected and warning counters to the suite",
+        "Run render_summary_text in Spanish",
+        "Verify the extended counts and the final summary line",
+    ],
+    criteria=[
+        "The summary reports xfailed, xpassed, deselected, and warning counts",
+    ],
+)
+def test_render_summary_text_spanish_includes_extended_counts():
+    suite = ReadableSuite(
+        rootdir=Path("."),
+        language="es",
+        cases=[
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_ok",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_ok",
+                display_name="ok",
+                status="passed",
+            ),
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_failed",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_failed",
+                display_name="failed",
+                status="failed",
+            ),
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_skipped",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_skipped",
+                display_name="skipped",
+                status="skipped",
+            ),
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_xfailed",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_xfailed",
+                display_name="xfailed",
+                status="xfailed",
+            ),
+            ReadableTestCase(
+                nodeid="tests/test_demo.py::test_xpassed",
+                module_path="tests/test_demo.py",
+                class_name="",
+                function_name="test_xpassed",
+                display_name="xpassed",
+                status="xpassed",
+            ),
+        ],
+        deselected=2,
+        warnings=3,
+    )
+
+    text = render_summary_text(suite, "es")
+    assert "- xfallidas: 1" in text
+    assert "- xaprobadas: 1" in text
+    assert (
+        "Resumen final: total=5, aprobadas=1, fallidas=1, omitidas=1, "
+        "xfallidas=1, xaprobadas=1, deseleccionadas=2, advertencias=3"
+    ) in text
+
+
+@readable(
+    intention="Whether render_summary_text shows a no-tests message when the suite is empty.",
+    steps=[
+        "Build an empty suite",
+        "Run render_summary_text",
+        "Verify that the no-tests label is rendered",
+    ],
+    criteria=[
+        "Empty suites render the no-tests message",
+    ],
+)
+def test_render_summary_text_shows_no_tests_message():
+    suite = ReadableSuite(rootdir=Path("."), language="en", cases=[])
+    text = render_summary_text(suite, "en")
+    assert "Readable summary" in text
+    assert "no tests ran" in text
+    assert "Final summary" not in text
+
+
+@readable(
     intention="Whether render_summary_text preserves language-specific labels for Spanish and English cases.",
     steps=[
         "Build a suite with one case in Spanish and another in English",
