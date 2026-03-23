@@ -880,6 +880,7 @@ def test_plugin_styles_intention_lines_in_yellow():
     assert plugin._line_style("    What it tests: validates something") == {"yellow": True}
     assert plugin._line_style("    Condiciones para aprobar:") == {"blue": True}
     assert plugin._line_style("    Pass conditions:") == {"blue": True}
+    assert plugin._line_style("    Error: boom") == {"red": True}
 
 
 @readable(

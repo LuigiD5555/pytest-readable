@@ -149,10 +149,13 @@ class ReadableRuntimePlugin:
         normalized = line.strip()
         what_prefixes = tuple(f"{get_language_pack(code).what_label}:" for code in supported_languages())
         criteria_prefixes = tuple(f"{get_language_pack(code).criteria_label}:" for code in supported_languages())
+        error_prefixes = tuple(f"{get_language_pack(code).error_label}:" for code in supported_languages())
         if normalized.startswith(what_prefixes):
             return {"yellow": True}
         if normalized.startswith(criteria_prefixes):
             return {"blue": True}
+        if normalized.startswith(error_prefixes):
+            return {"red": True}
         for code in supported_languages():
             status_labels = get_language_pack(code).status_labels
             if normalized.startswith(f"- [{status_labels['passed']}]") or normalized.startswith(
