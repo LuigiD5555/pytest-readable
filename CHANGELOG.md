@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.2] - 2026-03-23
+
+- The `readable` helper now forwards `--path-mode` and `--base-path` to pytest so nested repositories can be launched from the CLI with the right display-path strategy.
+- The CLI help now documents the new path-resolution options and shows an explicit nested-repository example.
+- Added coverage for CLI forwarding of `--path-mode` and `--base-path`.
+
 ## [0.2.1] - 2026-03-23
 
 - `xfailed` and `xpassed` test outcomes are now tracked and displayed separately in the readable summary.

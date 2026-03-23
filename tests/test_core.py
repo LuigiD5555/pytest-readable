@@ -1141,6 +1141,41 @@ def test_cli_forwards_lang_without_forcing_quiet_defaults(monkeypatch):
 
 
 @readable(
+    intention="Whether readable CLI forwards --path-mode to pytest when it is set explicitly.",
+    steps=[
+        "Intercept subprocess.run from the CLI",
+        "Run main with pytest and a non-default path mode",
+        "Verify that the final command includes the forwarded path mode",
+    ],
+    criteria=[
+        "The final command includes --path-mode=cwd",
+    ],
+)
+def test_cli_forwards_path_mode_to_pytest_command(monkeypatch):
+    code, captured_command = _run_cli_main_with_path_mode(monkeypatch)
+    assert code == 0
+    assert "--path-mode=cwd" in captured_command
+
+
+@readable(
+    intention="Whether readable CLI forwards --base-path to pytest when it is provided.",
+    steps=[
+        "Intercept subprocess.run from the CLI",
+        "Run main with pytest and a base path",
+        "Verify that the final command includes the forwarded base path",
+    ],
+    criteria=[
+        "The final command includes --base-path=digit-server",
+    ],
+)
+def test_cli_forwards_base_path_to_pytest_command(monkeypatch):
+    code, captured_command = _run_cli_main_with_path_mode(monkeypatch, path_mode="explicit", base_path="digit-server")
+    assert code == 0
+    assert "--path-mode=explicit" in captured_command
+    assert "--base-path=digit-server" in captured_command
+
+
+@readable(
     intention="Whether readable pytest -v enables readable-verbose while still forwarding pytest verbosity.",
     steps=[
         "Intercept subprocess.run from the CLI",
@@ -1304,6 +1339,23 @@ def _run_cli_main_with_verbose(monkeypatch, verbose_flag: str):
     monkeypatch.setattr(cli.subprocess, "run", fake_run)
 
     code = cli.main(["pytest", verbose_flag])
+    return code, captured["command"]
+
+
+def _run_cli_main_with_path_mode(monkeypatch, *, path_mode: str = "cwd", base_path: str = ""):
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(command: list[str], *, text: bool, capture_output: bool, check: bool) -> subprocess.CompletedProcess:
+        captured["command"] = command
+        return subprocess.CompletedProcess(command, 0, stdout="Resumen legible\n- Total: 0\n", stderr="")
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+
+    argv = ["pytest", "--lang=es", f"--path-mode={path_mode}"]
+    if base_path:
+        argv.append(f"--base-path={base_path}")
+
+    code = cli.main(argv)
     return code, captured["command"]
 
 

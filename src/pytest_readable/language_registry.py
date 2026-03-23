@@ -79,7 +79,9 @@ def unregister_language(code: str) -> None:
     _LANGUAGE_REGISTRY.pop(code, None)
 
 
-def language_pack(code: str, *, base: str | None = None, **overrides: Any) -> Callable[[LanguagePackFactory], LanguagePackFactory]:
+def language_pack(
+    code: str, *, base: str | None = None, **overrides: Any
+) -> Callable[[LanguagePackFactory], LanguagePackFactory]:
     """Decorator that registers a language pack using optional base inheritance."""
 
     def _decorator(factory: LanguagePackFactory) -> LanguagePackFactory:
@@ -179,7 +181,7 @@ def _register_english() -> dict[str, Any]:
     steps_label="Pasos",
     criteria_label="Condiciones para aprobar",
     missing_criteria_label="Sin criterios documentados",
-    display_name_label="Nombre legible",
+    display_name_label="Nombre mostrado",
     final_summary_template="Resumen final: total={total}, aprobadas={passed}, fallidas={failed}, omitidas={skipped}",
     markdown_title="Especificaciones de tests",
     markdown_generated_on="Generado el",

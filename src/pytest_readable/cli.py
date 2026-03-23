@@ -86,6 +86,27 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Render the detailed readable report with steps and pass conditions",
     )
+    parser.add_argument(
+        "--path-mode",
+        choices=["auto", "root", "cwd", "explicit"],
+        default="auto",
+        help=(
+            "How readable resolves display paths: "
+            "'auto' uses cwd and falls back to project root (default); "
+            "'root' always uses the project root; "
+            "'cwd' uses the current working directory; "
+            "'explicit' uses --base-path (useful for nested repositories)"
+        ),
+    )
+    parser.add_argument(
+        "--base-path",
+        default="",
+        metavar="PATH",
+        help=(
+            "Explicit base path for display paths when --path-mode=explicit. "
+            "Example: readable --path-mode=explicit --base-path=digit-server digit-server/tests/"
+        ),
+    )
     return parser
 
 
@@ -120,6 +141,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.export:
         pytest_args.append(f"--export={args.export}")
+
+    if args.path_mode != "auto" and not any(part.startswith("--path-mode") for part in pytest_args):
+        pytest_args.append(f"--path-mode={args.path_mode}")
+
+    if args.base_path and not any(part.startswith("--base-path") for part in pytest_args):
+        pytest_args.append(f"--base-path={args.base_path}")
 
     requested_verbose = any(
         part == "--verbose" or (part.startswith("-v") and part != "-")
