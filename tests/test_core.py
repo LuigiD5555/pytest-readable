@@ -605,44 +605,45 @@ def test_render_summary_text_shows_no_tests_message():
 
 
 @readable(
-    intention="Whether render_summary_text preserves language-specific labels for Spanish and English cases.",
+    intention="Whether render_summary_text uses the output language labels for all cases regardless of case language.",
     steps=[
         "Build a suite with one case in Spanish and another in English",
-        "Run render_summary_text in detailed mode",
-        "Verify the status, intention, and step labels for each language",
+        "Run render_summary_text in Spanish detailed mode",
+        "Verify that status and field labels use the output language for both cases",
     ],
     criteria=[
-        "Each case preserves its language labels for status, intention, and steps",
+        "Both cases show Spanish status labels when output language is Spanish",
+        "Both cases show Spanish field labels (Qué prueba, Pasos) when output language is Spanish",
     ],
 )
-def test_render_summary_text_uses_case_language_labels():
+def test_render_summary_text_uses_output_language_labels():
     text = _render_mixed_language_summary()
     assert "Resumen legible" in text
     assert "[aprobadas] tests/test_demo.py::test_es" in text
-    assert "[passed] tests/test_demo.py::test_en" in text
+    assert "[aprobadas] tests/test_demo.py::test_en" in text
     assert "Qué prueba: Valida salida" in text
     assert "Pasos:" in text
-    assert "What it tests: Validates output" in text
-    assert "Steps:" in text
+    assert "Qué prueba: Validates output" in text
+    assert "Steps:" not in text
 
 
 @readable(
-    intention="Whether render_summary_text shows localized placeholders when criteria are missing.",
+    intention="Whether render_summary_text shows output-language placeholders when criteria are missing.",
     steps=[
         "Build a suite with one Spanish case and one English case without criteria",
-        "Run render_summary_text in detailed mode",
-        "Verify the criteria placeholders in Spanish and English",
+        "Run render_summary_text in Spanish detailed mode",
+        "Verify the criteria placeholders use the output language for both cases",
     ],
     criteria=[
-        "A localized placeholder is shown when criteria are missing",
+        "Both cases show the Spanish missing criteria placeholder when output language is Spanish",
     ],
 )
 def test_render_summary_text_uses_localized_missing_criteria_placeholders():
     text = _render_mixed_language_summary()
     assert "Condiciones para aprobar:" in text
     assert "1. Sin criterios documentados" in text
-    assert "Pass conditions:" in text
-    assert "1. No pass conditions documented" in text
+    assert "Pass conditions:" not in text
+    assert "No pass conditions documented" not in text
 
 
 @readable(

@@ -700,33 +700,33 @@ def test_plugin_tree_without_readable_uses_function_name(pytester):
 
 
 @readable(
-    intention="Whether the auto detailed summary keeps labels and status for the Spanish case.",
+    intention="Whether the auto detailed summary keeps labels and status in English for both cases.",
     steps=[
         "Create two temporary tests with readable metadata, one in Spanish and one in English",
         "Run pytest collect-only with readable-lang=auto and include-steps",
-        "Verify that the Spanish case uses its labels and status in Spanish",
+        "Verify that both cases use English labels and status",
     ],
     criteria=[
-        "The Spanish case uses labels and status in Spanish",
+        "Both cases use English labels and status",
     ],
 )
 @pytest.mark.auto_lang_only
 def test_plugin_applies_case_language_strategy_in_detailed_list_es(pytester):
     stdout = _run_case_language_strategy(pytester)
-    assert "- [recolectadas] test_lang.py::test_case_es" in stdout
-    assert "Qué prueba: Valida comportamiento en español" in stdout
-    assert "Pasos:" in stdout
+    assert "- [collected] test_lang.py::test_case_es" in stdout
+    assert "What it tests: Valida comportamiento en español" in stdout
+    assert "Steps:" in stdout
 
 
 @readable(
-    intention_es="Verifica que el resumen detallado automático conserva las etiquetas y el estado para el caso en inglés.",
+    intention_es="Verifica que el caso en inglés use las etiquetas del idioma de output (inglés) cuando readable-lang=auto detecta inglés.",
     steps_es=[
         "Crea dos pruebas temporales con metadata readable en español e inglés",
         "Ejecuta pytest en modo collect-only con readable-lang=auto e include-steps",
-        "Verifica que el caso en inglés use sus etiquetas y estado en inglés",
+        "Verifica que el caso en inglés use etiquetas inglesas porque el output es inglés",
     ],
     criteria_es=[
-        "El caso en inglés usa etiquetas y estado en inglés",
+        "El caso en inglés muestra etiquetas en inglés cuando el output language es inglés",
     ],
 )
 @pytest.mark.auto_lang_only

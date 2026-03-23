@@ -18,6 +18,7 @@ class LanguagePack:
     criteria_label: str
     missing_criteria_label: str
     display_name_label: str
+    error_label: str
     final_summary_template: str
     markdown_title: str
     markdown_generated_on: str
@@ -149,6 +150,7 @@ def _register_english() -> dict[str, Any]:
         "criteria_label": "Pass conditions",
         "missing_criteria_label": "No pass conditions documented",
         "display_name_label": "Display name",
+        "error_label": "Error",
         "final_summary_template": "Final summary: total={total}, passed={passed}, failed={failed}, skipped={skipped}",
         "markdown_title": "Test Specs",
         "markdown_generated_on": "Generated on",
@@ -182,6 +184,7 @@ def _register_english() -> dict[str, Any]:
     criteria_label="Condiciones para aprobar",
     missing_criteria_label="Sin criterios documentados",
     display_name_label="Nombre mostrado",
+    error_label="Error",
     final_summary_template="Resumen final: total={total}, aprobadas={passed}, fallidas={failed}, omitidas={skipped}",
     markdown_title="Especificaciones de tests",
     markdown_generated_on="Generado el",

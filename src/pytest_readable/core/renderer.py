@@ -16,6 +16,31 @@ def _status_label(status: str, language: str) -> str:
     return labels.get(status, labels["unknown"])
 
 
+def _render_case_lines(case, pack, include_what, include_steps, include_display_name) -> list[str]:
+    """Emit the detail lines for a single test case."""
+    lines: list[str] = []
+    status_text = _status_label(case.status, pack.code)
+    lines.append(f"- [{status_text}] {case.nodeid}")
+    if include_display_name:
+        lines.append(f"    {pack.display_name_label}: {case.display_name}")
+    if (include_what or include_steps) and case.what:
+        lines.append(f"    {pack.what_label}: {case.what}")
+    if include_steps and case.steps:
+        lines.append(f"    {pack.steps_label}:")
+        for idx, step in enumerate(case.steps, 1):
+            lines.append(f"      {idx}. {step}")
+    if include_steps:
+        lines.append(f"    {pack.criteria_label}:")
+        if case.criteria:
+            for idx, check in enumerate(case.criteria, 1):
+                lines.append(f"      {idx}. {check}")
+        else:
+            lines.append(f"      1. {pack.missing_criteria_label}")
+    if case.error_message:
+        lines.append(f"    {pack.error_label}: {case.error_message}")
+    return lines
+
+
 def render_summary_text(
     suite: ReadableSuite,
     language: str,
@@ -42,24 +67,7 @@ def render_summary_text(
         lines.append(summary_pack.list_title)
         lines.append("")
         for case in suite.cases:
-            case_pack = get_language_pack(case.language or summary_pack.code)
-            status_text = _status_label(case.status, case_pack.code)
-            lines.append(f"- [{status_text}] {case.nodeid}")
-            if include_display_name:
-                lines.append(f"    {case_pack.display_name_label}: {case.display_name}")
-            if (include_what or include_steps) and case.what:
-                lines.append(f"    {case_pack.what_label}: {case.what}")
-            if include_steps and case.steps:
-                lines.append(f"    {case_pack.steps_label}:")
-                for step_idx, step in enumerate(case.steps, 1):
-                    lines.append(f"      {step_idx}. {step}")
-            if include_steps:
-                lines.append(f"    {case_pack.criteria_label}:")
-                if case.criteria:
-                    for check_idx, check in enumerate(case.criteria, 1):
-                        lines.append(f"      {check_idx}. {check}")
-                else:
-                    lines.append(f"      1. {case_pack.missing_criteria_label}")
+            lines.extend(_render_case_lines(case, summary_pack, include_what, include_steps, include_display_name))
 
     error_count = counts.get("error", 0)
     xfailed_count = counts.get("xfailed", 0)

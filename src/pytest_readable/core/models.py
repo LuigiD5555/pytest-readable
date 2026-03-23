@@ -23,6 +23,7 @@ class ReadableTestCase:
     criteria: list[str] = field(default_factory=list)
     markers: list[str] = field(default_factory=list)
     status: str = "collected"
+    error_message: str = ""
 
 
 @dataclass
